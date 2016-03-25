@@ -1,0 +1,6 @@
+[package]
+name = "lsystem"
+version = "0.1.0"
+authors = ["Mark Hintz <markohintz@gmail.com>"]
+
+[dependencies]
