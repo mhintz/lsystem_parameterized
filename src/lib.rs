@@ -1,5 +1,3 @@
-use std::f32;
-
 // These actions define actual mesh-generation actions
 #[derive(Copy, Clone, Debug)]
 pub enum Action {
@@ -67,7 +65,7 @@ pub enum Rule {
 // Implement custom versions of this function to produce new chains of modules from an existing module
 pub fn rule_produce(component: Module) -> Vec<Module> {
   match component.action {
-    Action::Branch { w: w, l: l } => {
+    Action::Branch { w, l } => {
       vec![
         Module::action(Action::branch(w, l / 3.0)),
         Module::action(Action::pitch((60.0_f32).to_radians())),
