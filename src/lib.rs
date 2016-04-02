@@ -12,16 +12,18 @@ pub enum Action {
   None, // This action does nothing. Used as the action part of a module which is a rule
 }
 
-impl Action {
-  pub fn branch(w: f32, l: f32) -> Action { Action::Branch { w: w, l: l } }
-  pub fn forward(d: f32) -> Action { Action::Forward { d: d } }
-  pub fn roll(r: f32) -> Action { Action::Roll { r: r } }
-  pub fn pitch(r: f32) -> Action { Action::Pitch { r: r } }
-  pub fn yaw(r: f32) -> Action { Action::Yaw { r: r } }
-  pub fn reverse() -> Action { Action::Reverse }
-  pub fn push() -> Action { Action::Push }
-  pub fn pop() -> Action { Action::Pop }
-  pub fn none() -> Action { Action::None }
+pub fn branch(w: f32, l: f32) -> Action { Action::Branch { w: w, l: l } }
+pub fn forward(d: f32) -> Action { Action::Forward { d: d } }
+pub fn roll(r: f32) -> Action { Action::Roll { r: r } }
+pub fn pitch(r: f32) -> Action { Action::Pitch { r: r } }
+pub fn yaw(r: f32) -> Action { Action::Yaw { r: r } }
+pub fn reverse() -> Action { Action::Reverse }
+pub fn push() -> Action { Action::Push }
+pub fn pop() -> Action { Action::Pop }
+pub fn none() -> Action { Action::None }
+
+pub trait ModuleTrait {
+  fn actions() -> Vec<Action>;
 }
 
 // This is a "module", one part of an l-system "word",
@@ -67,13 +69,13 @@ pub fn rule_produce(component: Module) -> Vec<Module> {
   match component.action {
     Action::Branch { w, l } => {
       vec![
-        Module::action(Action::branch(w, l / 3.0)),
-        Module::action(Action::pitch((60.0_f32).to_radians())),
-        Module::action(Action::branch(w, l / 3.0)),
-        Module::action(Action::pitch((-120.0_f32).to_radians())),
-        Module::action(Action::branch(w, l / 3.0)),
-        Module::action(Action::pitch((60.0_f32).to_radians())),
-        Module::action(Action::branch(w, l / 3.0)),
+        Module::action(branch(w, l / 3.0)),
+        Module::action(pitch((60.0_f32).to_radians())),
+        Module::action(branch(w, l / 3.0)),
+        Module::action(pitch((-120.0_f32).to_radians())),
+        Module::action(branch(w, l / 3.0)),
+        Module::action(pitch((60.0_f32).to_radians())),
+        Module::action(branch(w, l / 3.0)),
       ]
     },
     Action::None => {
