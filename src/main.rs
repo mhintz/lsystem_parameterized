@@ -1,4 +1,4 @@
-extern crate lsystem;
+mod lsystem;
 
 use lsystem::*;
 
