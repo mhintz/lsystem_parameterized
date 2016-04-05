@@ -29,6 +29,21 @@ impl Vert {
   }
 }
 
+pub struct BufferSet {
+  pub vertices: VertexBuffer<Vert>,
+  pub indices: IndexBuffer<u32>
+}
+
+impl BufferSet {
+  pub fn new <T> (gl: & T, primtype: PrimitiveType) -> BufferSet
+  where T: Facade {
+    BufferSet {
+      indices: IndexBuffer::<u32>::empty(gl, primtype, 0).unwrap(),
+      vertices: VertexBuffer::<Vert>::empty(gl, 0).unwrap()
+    }
+  }
+}
+
 #[derive(Copy, Clone, Debug)]
 #[repr="C"]
 pub struct LineVert {
@@ -48,7 +63,7 @@ impl LineVert {
 pub struct LineMesh {
   vertices: Option<VertexBuffer<LineVert>>,
   indices: Option<IndexBuffer<u32>>,
-  points: Vec<Pt>,
+  pub points: Vec<Pt>,
 }
 
 impl LineMesh {
@@ -63,6 +78,9 @@ impl LineMesh {
   pub fn append_point(&mut self, pt: Pt) {
     if let Some(& last_point) = self.points.last() {
       self.points.push(last_point);
+    } else {
+      // Double up the initial point
+      self.points.push(pt);
     }
     self.points.push(pt);
   }
@@ -76,20 +94,20 @@ impl LineMesh {
     self.points.push(pt);
     self.points.push(pt);
   }
-}
 
-pub struct BufferSet {
-  pub vertices: VertexBuffer<Vert>,
-  pub indices: IndexBuffer<u32>
-}
+  pub fn to_buffer<T: Facade>(& self, gl: & T) -> LineBuffer {
+    let vert_storage: Vec<LineVert> = self.points.iter().map(|v| LineVert::new(v.as_ref())).collect();
+    let index_storage: Vec<u32> = (0..(self.points.len() as u32)).collect();
 
-impl BufferSet {
-  pub fn new <T> (gl: & T, primtype: PrimitiveType) -> BufferSet
-  where T: Facade {
-    BufferSet {
-      indices: IndexBuffer::<u32>::empty(gl, primtype, 0).unwrap(),
-      vertices: VertexBuffer::<Vert>::empty(gl, 0).unwrap()
+    LineBuffer {
+      vertices: VertexBuffer::new(gl, & vert_storage).unwrap(),
+      indices: IndexBuffer::new(gl, PrimitiveType::LinesList, & index_storage).unwrap(),
     }
   }
+}
+
+pub struct LineBuffer {
+  pub vertices: VertexBuffer<LineVert>,
+  pub indices: IndexBuffer<u32>,
 }
 
