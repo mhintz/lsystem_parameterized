@@ -5,14 +5,16 @@ extern crate cgmath;
 mod lsystem;
 mod bufferset;
 mod defs;
+mod arcball;
 
 use std::fs::File;
 use std::io::Read;
 
 use glium::glutin;
+use glium::glutin::Event;
 use glium::{DisplayBuild, Surface};
 
-use cgmath::{Point, Basis3, Angle, Rad, Rotation, Rotation3};
+use cgmath::*;
 
 use lsystem::*;
 use bufferset::*;
@@ -25,7 +27,7 @@ const AR_SCALE: f32 = 20.0;
 const NEAR_PLANE_Z: f32 = 0.001;
 const FAR_PLANE_Z: f32 = 1000.0;
 
-const NUM_ITERATIONS: u32 = 10;
+const NUM_ITERATIONS: u32 = 3;
 static RAD_60: f32 = 60.0 / 180.0 * std::f32::consts::PI;
 static RAD_120: f32 = 120.0 / 180.0 * std::f32::consts::PI;
 
@@ -120,11 +122,14 @@ fn main() {
   cube_struct.append_point(Pt::new(1.0, 0.0, -1.0));
   cube_struct.append_point(Pt::new(0.0, 0.0, -1.0));
 
+  // OpenGL setup
   let window = glutin::WindowBuilder::new()
     .with_depth_buffer(24)
     .with_dimensions(WINDOW_WIDTH, WINDOW_HEIGHT)
     .with_title("L System".to_string())
     .build_glium().unwrap();
+
+  let mut mouse_pos: Vector2<f32> = Vector2::new(0.0, 0.0);
 
   let line_buffer = line_struct.to_buffer(& window);
 
@@ -144,6 +149,8 @@ fn main() {
   let basic_program = glium::Program::from_source(& window, & vert_shader, & frag_shader, None).unwrap();
 
   // Matrices
+  let mut camera = arcball::ArcballCamera::new();
+  camera.set_distance(30.0);
   let model_position = Mat4::from_translation(Vec3::new(0.0, 0.0, 0.0));
   let world_cam = Mat4::look_at(Pt::new(50.0, 0.0, 0.0), Pt::new(0.0, 0.0, 0.0), Vec3::new(0.0, 1.0, 0.0));
   let ortho_projection: Mat4 = cgmath::ortho(-ASPECT_RATIO, ASPECT_RATIO, -AR_SCALE * AR_SCALE, AR_SCALE * AR_SCALE, NEAR_PLANE_Z, FAR_PLANE_Z);
@@ -165,9 +172,11 @@ fn main() {
 
     target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
 
+    let arc_camera_mat = camera.get_transform_mat();
+
     let basic_uniforms = uniform! {
       u_model_world: mat4_uniform(& model_position),
-      u_world_cam: mat4_uniform(& world_cam),
+      u_world_cam: mat4_uniform(& arc_camera_mat),
       u_projection: mat4_uniform(& perspective_projection)
     };
 
@@ -183,8 +192,25 @@ fn main() {
 
     for event in window.poll_events() {
       match event {
-        glutin::Event::Closed => return,
-        glutin::Event::KeyboardInput(glutin::ElementState::Pressed, _, Some(glutin::VirtualKeyCode::Escape)) => return,
+        Event::Closed => return,
+        Event::KeyboardInput(glutin::ElementState::Pressed, _, Some(glutin::VirtualKeyCode::Escape)) => return,
+        Event::MouseInput(glutin::ElementState::Pressed, glutin::MouseButton::Left) => {
+          camera.activate(mouse_pos);
+        },
+        Event::MouseInput(glutin::ElementState::Released, glutin::MouseButton::Left) => {
+          camera.deactivate();
+        },
+        Event::MouseMoved((mousex, mousey)) => {
+          // let dpifactor = window.get_window().unwrap().hidpi_factor();
+          let dpifactor = 2.0;
+
+          let norm_x = 2.0 * ((mousex as f32) / dpifactor / (WINDOW_WIDTH as f32)) - 1.0;
+          // Note that the sign is reversed
+          let norm_y = -(2.0 * ((mousey as f32) / dpifactor / (WINDOW_HEIGHT as f32)) - 1.0);
+          mouse_pos = Vector2::new(norm_x, norm_y);
+
+          camera.rotate(mouse_pos);
+        },
         _ => (),
       }
     }
