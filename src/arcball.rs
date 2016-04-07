@@ -70,7 +70,7 @@ impl ArcballCamera {
   }
 
   pub fn get_vec_on_ball(input: Vector2<f32>) -> Vector3<f32> {
-    let dist = input.length();
+    let dist = input.magnitude();
     let point_z = if dist <= 1.0 { (1.0 - dist).sqrt() } else { 0.0 };
     Vector3::new(input.x, input.y, point_z).normalize()
   }
@@ -85,8 +85,7 @@ impl ArcballCamera {
       self.rotation = self.rotation.concat(& rotation);
       self.p_mouse = cur_mouse;
     } else if self.panning {
-      println!("panning");
-      // Note that the direction is reversed
+      // Note that the direction of target point movement is the reverse of the direction of mouse movement
       let mouse_vec = -(cur_mouse - self.p_mouse).normalize_to(self.pan_speed);
       let left_vec = self.rotation.rotate_vector(Vector3::new(1.0, 0.0, 0.0)).normalize_to(mouse_vec.x);
       let up_vec = self.rotation.rotate_vector(Vector3::new(0.0, 1.0, 0.0)).normalize_to(mouse_vec.y);
