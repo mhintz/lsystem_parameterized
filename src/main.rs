@@ -1,11 +1,11 @@
 #[macro_use]
 extern crate glium;
 extern crate cgmath;
+extern crate arcball_cgmath;
 
 mod lsystem;
 mod bufferset;
 mod defs;
-mod arcball;
 
 use std::fs::File;
 use std::io::Read;
@@ -147,7 +147,7 @@ fn main() {
   let basic_program = glium::Program::from_source(& window, & vert_shader, & frag_shader, None).unwrap();
 
   // Matrices
-  let mut camera = arcball::ArcballCamera::new();
+  let mut camera = arcball_cgmath::ArcballCamera::new();
   camera.set_distance(30.0);
   let model_position = Mat4::from_translation(Vec3::new(0.0, 0.0, 0.0));
   let perspective_projection: Mat4 = cgmath::perspective(cgmath::Deg::new(40.0), ASPECT_RATIO, NEAR_PLANE_Z, FAR_PLANE_Z);

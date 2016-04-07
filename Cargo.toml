@@ -6,3 +6,4 @@ authors = ["Mark Hintz <markinportland7@gmail.com>"]
 [dependencies]
 glium = "0.13.5"
 cgmath = "0.8.0"
+arcball-cgmath = "0.2.0"
