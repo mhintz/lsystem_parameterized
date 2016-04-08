@@ -147,8 +147,9 @@ fn main() {
   let basic_program = glium::Program::from_source(& window, & vert_shader, & frag_shader, None).unwrap();
 
   // Matrices
-  let mut camera = arcball_cgmath::ArcballCamera::new();
-  camera.set_distance(30.0);
+  let mut camera: arcball_cgmath::ArcballCamera<f32> = arcball_cgmath::ArcballCamera::new();
+  camera.set_distance(30.0)
+    .set_spin_speed(1.0);
   let model_position = Mat4::from_translation(Vec3::new(0.0, 0.0, 0.0));
   let perspective_projection: Mat4 = cgmath::perspective(cgmath::Deg::new(40.0), ASPECT_RATIO, NEAR_PLANE_Z, FAR_PLANE_Z);
 
