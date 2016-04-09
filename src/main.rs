@@ -6,6 +6,7 @@ extern crate arcball_cgmath;
 mod lsystem;
 mod bufferset;
 mod defs;
+mod matrixstack;
 
 use std::fs::File;
 use std::io::Read;
@@ -19,6 +20,7 @@ use cgmath::*;
 use lsystem::*;
 use bufferset::*;
 use defs::*;
+use matrixstack::*;
 
 const WINDOW_WIDTH: u32 = 800;
 const WINDOW_HEIGHT: u32 = 800;
@@ -52,35 +54,44 @@ pub fn rule_produce(component: Module) -> Vec<Module> {
 pub fn ls_to_lines(word: &[Module]) -> LineMesh {
   let mut line = LineMesh::new();
 
-  // lsystem moves by default in the positive-z direction
-  let base_heading = Vec3::new(0.0, 0.0, 1.0);
-  let mut matrix: Basis3<f32> = Basis3::one();
+  // lsystem moves by default in the positive-y direction
+  let base_heading = Vec3::new(0.0, 1.0, 0.0);
+  let mut mat_stack: MatrixStack<f32> = MatrixStack::new();
 
-  let mut pos = Pt::origin();
-  line.append_point(pos);
+  // Starting point
+  line.append_point(Pt::origin());
 
   for item in word {
     match *item {
-      Module::Branch{ w: _, l } => {
-        let heading = matrix.rotate_vector(base_heading);
-        pos = pos + heading * l;
-        line.append_point(pos);
+      Module::Branch { w: _, l: length } => {
+        let heading = mat_stack.transform_vector(base_heading) * length;
+        mat_stack.transform(Matrix4::from_translation(heading));
+        line.append_point(mat_stack.transform_point(Point3::new(0.0, 0.0, 0.0)));
       },
-      Module::Forward{ d } => {
-        let heading = matrix.rotate_vector(base_heading);
-        pos = pos + heading * d;
-        line.move_to(pos);
+      Module::Forward { d: distance } => {
+        let heading = mat_stack.transform_vector(base_heading) * distance;
+        mat_stack.transform(Matrix4::from_translation(heading));
+        line.move_to(mat_stack.transform_point(Point3::new(0.0, 0.0, 0.0)));
       },
-      Module::Roll{ r } => {
-        matrix = matrix.concat(& Basis3::from_angle_z(Rad::new(r)));
+      Module::Roll { r } => {
+        mat_stack.rotate(Matrix3::from_angle_z(Rad::new(r)));
       },
-      Module::Pitch{ r } => {
-        matrix = matrix.concat(& Basis3::from_angle_x(Rad::new(r)));
+      Module::Pitch { r } => {
+        mat_stack.rotate(Matrix3::from_angle_x(Rad::new(r)));
       },
-      Module::Yaw{ r } => {
-        matrix = matrix.concat(& Basis3::from_angle_y(Rad::new(r)));
+      Module::Yaw { r } => {
+        mat_stack.rotate(Matrix3::from_angle_y(Rad::new(r)));
       },
-      _ => (),
+      Module::Reverse => {
+        mat_stack.rotate(Matrix3::from_angle_y(Rad::new(180.0_f32.to_radians())));
+      },
+      Module::Push => {
+        mat_stack.push();
+      },
+      Module::Pop => {
+        mat_stack.pop();
+      },
+      Module::None => (),
     }
   }
 
@@ -149,7 +160,7 @@ fn main() {
   // Matrices
   let mut camera: arcball_cgmath::ArcballCamera<f32> = arcball_cgmath::ArcballCamera::new();
   camera.set_distance(30.0)
-    .set_spin_speed(1.0);
+    .set_spin_speed(5.0);
   let model_position = Mat4::from_translation(Vec3::new(0.0, 0.0, 0.0));
   let perspective_projection: Mat4 = cgmath::perspective(cgmath::Deg::new(40.0), ASPECT_RATIO, NEAR_PLANE_Z, FAR_PLANE_Z);
 
