@@ -64,13 +64,11 @@ pub fn ls_to_lines(word: &[Module]) -> LineMesh {
   for item in word {
     match *item {
       Module::Branch { w: _, l: length } => {
-        let heading = mat_stack.transform_vector(base_heading) * length;
-        mat_stack.transform(Matrix4::from_translation(heading));
+        mat_stack.transform(Matrix4::from_translation(base_heading * length));
         line.append_point(mat_stack.transform_point(Point3::new(0.0, 0.0, 0.0)));
       },
       Module::Forward { d: distance } => {
-        let heading = mat_stack.transform_vector(base_heading) * distance;
-        mat_stack.transform(Matrix4::from_translation(heading));
+        mat_stack.transform(Matrix4::from_translation(base_heading * distance));
         line.move_to(mat_stack.transform_point(Point3::new(0.0, 0.0, 0.0)));
       },
       Module::Roll { r } => {

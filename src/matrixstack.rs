@@ -19,11 +19,11 @@ impl<T: BaseFloat + Float> MatrixStack<T> {
   }
 
   pub fn transform(&mut self, transformation: Matrix4<T>) {
-    self.current = transformation * self.current;
+    self.current = self.current * transformation;
   }
 
   pub fn rotate(&mut self, rotation: Matrix3<T>) {
-    self.current = Matrix4::from(rotation) * self.current;
+    self.current = self.current * Matrix4::from(rotation);
   }
 
   pub fn push(&mut self) {
@@ -43,6 +43,13 @@ impl<T: BaseFloat + Float> MatrixStack<T> {
   pub fn transform_vector(& self, target: Vector3<T>) -> Vector3<T> { (self.current * target.extend(T::zero())).truncate() }
 
   pub fn transform_point(& self, target: Point3<T>) -> Point3<T> { Point3::from_homogeneous(self.current * target.to_homogeneous()) }
+
+  /// Transforms the point, but only with rotation and scale, no translation
+  pub fn transform_point_no_translate(& self, target: Point3<T>) -> Point3<T> {
+    let mut vec_version = target.to_homogeneous();
+    vec_version.w = T::zero(); // Set to 0.0 so that translation doesn't apply
+    Point3::from_homogeneous(self.current * vec_version)
+  }
 
   pub fn get_matrix(& self) -> Matrix4<T> { self.current }
 }
