@@ -2,11 +2,11 @@
 extern crate glium;
 extern crate cgmath;
 extern crate arcball_cgmath;
+extern crate matrixstack;
 
 mod lsystem;
 mod bufferset;
 mod defs;
-mod matrixstack;
 
 use std::fs::File;
 use std::io::Read;
@@ -20,7 +20,6 @@ use cgmath::*;
 use lsystem::*;
 use bufferset::*;
 use defs::*;
-use matrixstack::*;
 
 const WINDOW_WIDTH: u32 = 800;
 const WINDOW_HEIGHT: u32 = 800;
@@ -56,7 +55,7 @@ pub fn ls_to_lines(word: &[Module]) -> LineMesh {
 
   // lsystem moves by default in the positive-y direction
   let base_heading = Vec3::new(0.0, 1.0, 0.0);
-  let mut mat_stack: MatrixStack<f32> = MatrixStack::new();
+  let mut mat_stack: matrixstack::MatrixStack<f32> = matrixstack::MatrixStack::new();
 
   // Starting point
   line.append_point(Pt::origin());
