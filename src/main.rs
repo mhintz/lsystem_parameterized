@@ -27,26 +27,96 @@ const ASPECT_RATIO: f32 = (WINDOW_WIDTH as f32) / (WINDOW_HEIGHT as f32);
 const NEAR_PLANE_Z: f32 = 0.001;
 const FAR_PLANE_Z: f32 = 1000.0;
 
-const NUM_ITERATIONS: u32 = 3;
-static RAD_60: f32 = 60.0 / 180.0 * std::f32::consts::PI;
-static RAD_120: f32 = 120.0 / 180.0 * std::f32::consts::PI;
+const NUM_ITERATIONS: u32 = 6;
+const DEG_TO_RAD: f32 = std::f32::consts::PI / 180.0;
+const RAD_30: f32 = 30.0 * DEG_TO_RAD;
+const RAD_60: f32 = 60.0 * DEG_TO_RAD;
+const RAD_90: f32 = 90.0 * DEG_TO_RAD;
+const RAD_120: f32 = 120.0 * DEG_TO_RAD;
 
-/// Implement custom versions of this function to produce new chains of modules from an existing module
-pub fn rule_produce(component: Module) -> Vec<Module> {
-  match component {
-    Module::Branch { w, l } => {
-      vec![
-        branch(w, l / 3.0),
-        pitch(RAD_60),
-        branch(w, l / 3.0),
-        pitch(-RAD_120),
-        branch(w, l / 3.0),
-        pitch(RAD_60),
-        branch(w, l / 3.0),
-      ]
-    },
-    Module::None => vec![component],
-    _ => vec![component],
+struct KochCurve;
+
+impl LSystem for KochCurve {
+  fn axiom(& self) -> Vec<Module> {
+    vec![
+      branch(1.0, 27.0),
+      pitch((-120.0_f32).to_radians()),
+      branch(1.0, 27.0),
+      pitch((-120.0_f32).to_radians()),
+      branch(1.0, 27.0),
+    ]
+  }
+
+  fn produce(& self, module: Module) -> Vec<Module> {
+    match module {
+      Module::Branch { w, l } => {
+        vec![
+          branch(w, l / 3.0),
+          pitch(RAD_60),
+          branch(w, l / 3.0),
+          pitch(-RAD_120),
+          branch(w, l / 3.0),
+          pitch(RAD_60),
+          branch(w, l / 3.0),
+        ]
+      },
+      _ => vec![module],
+    }
+  }
+}
+
+struct DragonCurve;
+
+impl LSystem for DragonCurve {
+  fn axiom(& self) -> Vec<Module> {
+    vec![
+      custom(1)
+    ]
+  }
+
+  fn produce(& self, module: Module) -> Vec<Module> {
+    match module {
+      Module::Custom(1) => vec![custom(1), roll(-RAD_90), custom(2)],
+      Module::Custom(2) => vec![custom(1), roll(RAD_90), custom(2)],
+      _ => vec![module],
+    }
+  }
+}
+
+struct BasicTree;
+
+impl LSystem for BasicTree {
+  fn axiom(& self) -> Vec<Module> {
+    vec![
+      branch(1.0, 1.0),
+      custom(1),
+    ]
+  }
+
+  fn produce(& self, module: Module) -> Vec<Module> {
+    match module {
+      Module::Branch { .. } => vec![module],
+      Module::Custom(1) => {
+        vec![
+          push(),
+          roll(RAD_30),
+          branch(1.0, 1.0),
+          custom(1),
+          pop(),
+          branch(1.0, 1.0),
+          custom(1),
+          push(),
+          yaw(RAD_60),
+          branch(1.0, 1.0),
+          custom(1),
+          pitch(RAD_30),
+          branch(1.0, 1.0),
+          custom(1),
+          pop()
+        ]
+      },
+      _ => vec![module],
+    }
   }
 }
 
@@ -62,13 +132,17 @@ pub fn ls_to_lines(word: &[Module]) -> LineMesh {
 
   for item in word {
     match *item {
+      Module::Custom(1) | Module::Custom(2) => {
+        mat_stack.transform(Matrix4::from_translation(base_heading));
+        line.append_point(mat_stack.origin());
+      },
       Module::Branch { w: _, l: length } => {
         mat_stack.transform(Matrix4::from_translation(base_heading * length));
-        line.append_point(mat_stack.transform_point(Point3::new(0.0, 0.0, 0.0)));
+        line.append_point(mat_stack.origin());
       },
       Module::Forward { d: distance } => {
         mat_stack.transform(Matrix4::from_translation(base_heading * distance));
-        line.move_to(mat_stack.transform_point(Point3::new(0.0, 0.0, 0.0)));
+        line.move_to(mat_stack.origin());
       },
       Module::Roll { r } => {
         mat_stack.rotate(Matrix3::from_angle_z(Rad::new(r)));
@@ -84,11 +158,13 @@ pub fn ls_to_lines(word: &[Module]) -> LineMesh {
       },
       Module::Push => {
         mat_stack.push();
+        line.move_to(mat_stack.origin());
       },
       Module::Pop => {
         mat_stack.pop();
+        line.move_to(mat_stack.origin());
       },
-      Module::None => (),
+      _ => (),
     }
   }
 
@@ -100,34 +176,17 @@ fn mat4_uniform(mat: & Mat4) -> [[f32; 4]; 4] {
 }
 
 fn main() {
-  let mut word: Vec<Module> = vec![
-    branch(1.0, 27.0),
-    pitch((-120.0_f32).to_radians()),
-    branch(1.0, 27.0),
-    pitch((-120.0_f32).to_radians()),
-    branch(1.0, 27.0),
-  ];
+  let koch_system = KochCurve {};
+  let koch_produced = run_system(& koch_system, NUM_ITERATIONS);
+  let koch_line_struct = ls_to_lines(& koch_produced);
 
-  for _ in 0..NUM_ITERATIONS {
-    let mut collector: Vec<Module> = vec![];
-    for letter in word {
-      collector.extend(rule_produce(letter));
-    }
-    word = collector;
-  }
+  let dragon_system = DragonCurve {};
+  let dragon_produced = run_system(& dragon_system, NUM_ITERATIONS);
+  let dragon_line_struct = ls_to_lines(& dragon_produced);
 
-  let line_struct = ls_to_lines(& word);
-
-  let mut cube_struct = LineMesh::new();
-
-  cube_struct.append_point(Pt::new(0.0, 0.0, 0.0));
-  cube_struct.append_point(Pt::new(1.0, 0.0, 0.0));
-  cube_struct.append_point(Pt::new(1.0, 1.0, 0.0));
-  cube_struct.append_point(Pt::new(0.0, 1.0, 0.0));
-  cube_struct.append_point(Pt::new(0.0, 1.0, -1.0));
-  cube_struct.append_point(Pt::new(1.0, 1.0, -1.0));
-  cube_struct.append_point(Pt::new(1.0, 0.0, -1.0));
-  cube_struct.append_point(Pt::new(0.0, 0.0, -1.0));
+  let tree_system = BasicTree {};
+  let tree_produced = run_system(& tree_system, NUM_ITERATIONS);
+  let tree_line_struct = ls_to_lines(& tree_produced);  
 
   // OpenGL setup
   let window = glutin::WindowBuilder::new()
@@ -139,7 +198,9 @@ fn main() {
   let mut mouse_pos: Vector2<f32> = Vector2::new(0.0, 0.0);
   let mut pan_button_pressed: bool = false;
 
-  let line_buffer = line_struct.to_buffer(& window);
+  // let line_buffer = koch_line_struct.to_buffer(& window);
+  // let line_buffer = dragon_line_struct.to_buffer(& window);
+  let line_buffer = tree_line_struct.to_buffer(& window);
 
   // Vertex Shader
   let mut vert_shader_file = File::open("src/shader/base.vs").unwrap();
@@ -189,7 +250,7 @@ fn main() {
 
     target.draw(& line_buffer.vertices, & line_buffer.indices, & basic_program, & basic_uniforms, & draw_params).unwrap();
 
-    // line_struct.draw(& target, & basic_program, & basic_uniforms, & draw_params);
+    // koch_line_struct.draw(& target, & basic_program, & basic_uniforms, & draw_params);
 
     target.finish().unwrap();
 
