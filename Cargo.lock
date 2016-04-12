@@ -5,7 +5,7 @@ dependencies = [
  "arcball-cgmath 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "cgmath 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "glium 0.13.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "matrixstack 0.1.0",
+ "matrixstack 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "num 0.1.31 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -318,7 +318,8 @@ dependencies = [
 
 [[package]]
 name = "matrixstack"
-version = "0.1.0"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "cgmath 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "num 0.1.31 (registry+https://github.com/rust-lang/crates.io-index)",
