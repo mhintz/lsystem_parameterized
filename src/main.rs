@@ -95,24 +95,37 @@ impl LSystem for BasicTree {
 
   fn produce(& self, module: Module) -> Vec<Module> {
     match module {
-      Module::Branch { .. } => vec![module],
-      Module::Custom(1) => {
+      Module::Branch { w: width, l: length } => vec![branch(width, length * 1.1)],
+      Module::Custom(1) => { // Trunk apex
         vec![
+          // Left branch
           push(),
           roll(RAD_30),
           branch(1.0, 1.0),
-          custom(1),
+          custom(2),
           pop(),
-          branch(1.0, 1.0),
-          custom(1),
           push(),
+          roll(-RAD_30),
+          branch(1.0, 1.0),
+          custom(3),
+          pop(),
           yaw(RAD_60),
           branch(1.0, 1.0),
           custom(1),
-          pitch(RAD_30),
+        ]
+      },
+      Module::Custom(2) => { // Branch apex left
+        vec![
+          roll(25.0 * DEG_TO_RAD),
           branch(1.0, 1.0),
-          custom(1),
-          pop()
+          custom(2),
+        ]
+      },
+      Module::Custom(3) => { // Branch apex right
+        vec![
+          roll(-25.0 * DEG_TO_RAD),
+          branch(1.0, 1.0),
+          custom(3),
         ]
       },
       _ => vec![module],
