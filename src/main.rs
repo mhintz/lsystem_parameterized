@@ -40,36 +40,25 @@ pub fn ls_to_lines(word: &[Module]) -> LineMesh {
   line.append_point(Pt::origin());
 
   for item in word {
-    match *item {
-      Module::Custom(1) | Module::Custom(2) => {
-        mat_stack.transform(Matrix4::from_translation(base_heading));
-        line.append_point(mat_stack.origin());
-      },
-      Module::Branch { w: _, l: length } => {
+    match item.to_draw_command() {
+      DrawCommand::Segment { w: _, l: length } => {
         mat_stack.transform(Matrix4::from_translation(base_heading * length));
         line.append_point(mat_stack.origin());
       },
-      Module::Forward { d: distance } => {
-        mat_stack.transform(Matrix4::from_translation(base_heading * distance));
-        line.move_to(mat_stack.origin());
-      },
-      Module::Roll { r } => {
+      DrawCommand::Roll { r } => {
         mat_stack.rotate(Matrix3::from_angle_z(Rad::new(r)));
       },
-      Module::Pitch { r } => {
+      DrawCommand::Pitch { r } => {
         mat_stack.rotate(Matrix3::from_angle_x(Rad::new(r)));
       },
-      Module::Yaw { r } => {
+      DrawCommand::Yaw { r } => {
         mat_stack.rotate(Matrix3::from_angle_y(Rad::new(r)));
       },
-      Module::Reverse => {
-        mat_stack.rotate(Matrix3::from_angle_y(Rad::new(180.0_f32.to_radians())));
-      },
-      Module::Push => {
+      DrawCommand::Push => {
         mat_stack.push();
         line.move_to(mat_stack.origin());
       },
-      Module::Pop => {
+      DrawCommand::Pop => {
         mat_stack.pop();
         line.move_to(mat_stack.origin());
       },
@@ -85,17 +74,17 @@ fn mat4_uniform(mat: & Mat4) -> [[f32; 4]; 4] {
 }
 
 fn main() {
-  let koch_system = KochCurve {};
-  let koch_produced = run_system(& koch_system, NUM_ITERATIONS);
-  let koch_line_struct = ls_to_lines(& koch_produced);
-
-  let dragon_system = DragonCurve {};
-  let dragon_produced = run_system(& dragon_system, NUM_ITERATIONS);
-  let dragon_line_struct = ls_to_lines(& dragon_produced);
+  // let koch_system = KochCurve {};
+  // let koch_produced = run_system(& koch_system, NUM_ITERATIONS);
+  // let koch_line_struct = ls_to_lines(& koch_produced);
+  //
+  // let dragon_system = DragonCurve {};
+  // let dragon_produced = run_system(& dragon_system, NUM_ITERATIONS);
+  // let dragon_line_struct = ls_to_lines(& dragon_produced);
 
   let tree_system = BasicTree {};
   let tree_produced = run_system(& tree_system, NUM_ITERATIONS);
-  let tree_line_struct = ls_to_lines(& tree_produced);  
+  let tree_line_struct = ls_to_lines(& tree_produced);
 
   // OpenGL setup
   let window = glutin::WindowBuilder::new()
