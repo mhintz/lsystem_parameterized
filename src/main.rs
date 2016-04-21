@@ -82,8 +82,12 @@ fn main() {
   // let dragon_produced = run_system(& dragon_system, NUM_ITERATIONS);
   // let dragon_line_struct = ls_to_lines(& dragon_produced);
 
-  let tree_system = BasicTree {};
-  let tree_produced = run_system(& tree_system, NUM_ITERATIONS);
+  // let tree_system = BasicTree {};
+  // let tree_produced = run_system(& tree_system, NUM_ITERATIONS);
+  // let tree_line_struct = ls_to_lines(& tree_produced);
+
+  let tree_system = BranchingTree {};
+  let tree_produced = run_system(& tree_system, 10);
   let tree_line_struct = ls_to_lines(& tree_produced);
 
   // OpenGL setup

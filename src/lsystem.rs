@@ -179,3 +179,49 @@ impl LSystem for BasicTree {
     }
   }
 }
+
+pub struct BranchingTree;
+
+impl LSystem for BranchingTree {
+  fn axiom(& self) -> Vec<Module> {
+    vec![
+      branch(1.0, 2.0, 1),
+      apex(),
+    ]
+  }
+
+  fn produce(& self, module: Module) -> Vec<Module> {
+      match module {
+          Module::Branch { w, l, life } => vec![branch(w, if life > 0 { l * 1.3 } else { l }, if life > 0 { life - 1 } else { 0 })],
+          Module::Apex => vec![
+            push(),
+            roll(-30.0_f32.to_radians()),
+            branch(1.0, 1.0, 3),
+            custom_none(1),
+            pop(),
+            push(),
+            roll(30.0_f32.to_radians()),
+            branch(1.0, 1.0, 3),
+            custom_none(1),
+            pop(),
+            yaw(60.0_f32.to_radians()),
+            branch(1.0, 1.0, 3),
+            apex(),
+          ],
+          Module::Custom(1, _) => vec![
+            push(),
+            roll(-30.0_f32.to_radians()),
+            branch(1.0, 0.85, 2),
+            pop(),
+            push(),
+            roll(30.0_f32.to_radians()),
+            branch(1.0, 0.85, 2),
+            pop(),
+            yaw(60.0_f32.to_radians()),
+            branch(1.0, 0.85, 2),
+            custom_none(1),
+          ],
+          _ => vec![module],
+      }
+  }
+}
