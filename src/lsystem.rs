@@ -38,14 +38,14 @@ pub enum Module {
 impl Module {
   pub fn to_draw_command(& self) -> DrawCommand {
     match * self {
-      Module::Roll { r } => DrawCommand::Roll { r: r },
-      Module::Pitch { r } => DrawCommand::Pitch { r: r },
-      Module::Yaw { r } => DrawCommand::Yaw { r: r },
-      Module::Push => DrawCommand::Push,
-      Module::Pop => DrawCommand::Pop,
-      Module::Apex => DrawCommand::None,
-      Module::Trunk { w, l, .. } => DrawCommand::Segment { w: w, l: l },
-      Module::Branch { w, l, .. } => DrawCommand::Segment { w: w, l: l },
+      Module::Roll { r } => roll_cmd(r),
+      Module::Pitch { r } => pitch_cmd(r),
+      Module::Yaw { r } => yaw_cmd(r),
+      Module::Push => push_cmd(),
+      Module::Pop => pop_cmd(),
+      Module::Apex => none_cmd(),
+      Module::Trunk { w, l, .. } => segment_cmd(w, l),
+      Module::Branch { w, l, .. } => segment_cmd(w, l),
       Module::Custom(_, cmd) => cmd,
     }
   }

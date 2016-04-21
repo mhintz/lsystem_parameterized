@@ -45,6 +45,10 @@ pub fn ls_to_lines(word: &[Module]) -> LineMesh {
         mat_stack.transform(Matrix4::from_translation(base_heading * length));
         line.append_point(mat_stack.origin());
       },
+      DrawCommand::Forward { d: distance } => {
+        mat_stack.transform(Matrix4::from_translation(base_heading * distance));
+        line.move_to(mat_stack.origin());
+      },
       DrawCommand::Roll { r } => {
         mat_stack.rotate(Matrix3::from_angle_z(Rad::new(r)));
       },
@@ -62,7 +66,7 @@ pub fn ls_to_lines(word: &[Module]) -> LineMesh {
         mat_stack.pop();
         line.move_to(mat_stack.origin());
       },
-      _ => (),
+      DrawCommand::None => (),
     }
   }
 
