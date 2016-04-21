@@ -1,3 +1,7 @@
+const PHI: f32 = 1.61803398875;
+const PHI_RECIP: f32 = 1.0 / PHI;
+const PHI_COMPLEMENT: f32 = 1.0 - PHI_RECIP;
+
 #[derive(Copy, Clone, Debug)]
 pub enum DrawCommand {
   Segment { w: f32, l: f32 },
@@ -192,11 +196,15 @@ impl LSystem for BranchingTree {
 
   fn produce(& self, module: Module) -> Vec<Module> {
       match module {
-          Module::Branch { w, l, life } => vec![branch(w, if life > 0 { l * 1.3 } else { l }, if life > 0 { life - 1 } else { 0 })],
+          Module::Branch { w, l, life } | Module::Trunk { w, l, life } => {
+              let new_length = if life > 0 { l * 1.3 } else { l };
+              let new_life = if life > 0 { life - 1 } else { 0 };
+              vec![branch(w, new_length, new_life)]
+          },
           Module::Apex => vec![
             push(),
             roll(-30.0_f32.to_radians()),
-            branch(1.0, 1.0, 3),
+            trunk(1.0, 1.0, 3),
             custom_none(1),
             pop(),
             push(),
@@ -204,7 +212,7 @@ impl LSystem for BranchingTree {
             branch(1.0, 1.0, 3),
             custom_none(1),
             pop(),
-            yaw(60.0_f32.to_radians()),
+            yaw((PHI_RECIP * 360.0_f32).to_radians()),
             branch(1.0, 1.0, 3),
             apex(),
           ],
@@ -217,7 +225,7 @@ impl LSystem for BranchingTree {
             roll(30.0_f32.to_radians()),
             branch(1.0, 0.85, 2),
             pop(),
-            yaw(60.0_f32.to_radians()),
+            yaw((PHI_COMPLEMENT * 360.0_f32).to_radians()),
             branch(1.0, 0.85, 2),
             custom_none(1),
           ],
