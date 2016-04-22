@@ -7,6 +7,9 @@ extern crate matrixstack;
 mod lsystem;
 mod bufferset;
 mod defs;
+mod vertex;
+mod linemesh;
+mod vertex_index_mesh;
 
 use std::fs::File;
 use std::io::Read;
@@ -14,12 +17,15 @@ use std::io::Read;
 use glium::glutin;
 use glium::glutin::{Event, ElementState};
 use glium::{DisplayBuild, Surface};
+use glium::index::PrimitiveType;
 
 use cgmath::*;
 
 use lsystem::*;
 use bufferset::*;
 use defs::*;
+use linemesh::LineMesh;
+use vertex_index_mesh::VertexIndexMesh;
 
 const WINDOW_WIDTH: u32 = 800;
 const WINDOW_HEIGHT: u32 = 800;
