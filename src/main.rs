@@ -3,6 +3,7 @@ extern crate glium;
 extern crate cgmath;
 extern crate arcball_cgmath;
 extern crate matrixstack;
+extern crate glm;
 
 mod lsystem;
 mod bufferset;
@@ -10,6 +11,7 @@ mod defs;
 mod vertex;
 mod linemesh;
 mod vertex_index_mesh;
+mod math;
 
 use std::fs::File;
 use std::io::Read;
@@ -25,6 +27,7 @@ use lsystem::*;
 use bufferset::*;
 use defs::*;
 use linemesh::LineMesh;
+use vertex::Vertex;
 use vertex_index_mesh::VertexIndexMesh;
 
 const WINDOW_WIDTH: u32 = 800;
@@ -77,6 +80,51 @@ pub fn ls_to_lines(word: &[Module]) -> LineMesh {
   }
 
   return line;
+}
+
+pub fn cylinder(start: Pt, end: Pt, facets: u32, radius: f32) -> VertexIndexMesh {
+  if facets < 2 { return VertexIndexMesh::new(PrimitiveType::TrianglesList); }
+
+  let rot_angle = Rad::full_turn() / (facets as f32);
+  let offset_angle = rot_angle / 2.0;
+
+  let stem_vec = end - start;
+  // If the vector happens to be the x axis, the cross product won't work
+  let cross_vec = if stem_vec == Vec3::unit_x() { Vec3::unit_y() } else { Vec3::unit_x() };
+  let perp_vec = stem_vec.cross(cross_vec).normalize_to(radius);
+
+  let mut mesh = VertexIndexMesh::new(PrimitiveType::TrianglesList);
+
+  let stem_axis = stem_vec.normalize();
+  let full_step = Mat3::from_axis_angle(stem_axis, rot_angle);
+  let half_step = Mat3::from_axis_angle(stem_axis, offset_angle);
+  let one_and_one_half_step = Mat3::from_axis_angle(stem_axis, rot_angle + offset_angle);
+
+  let base_point = start + perp_vec;
+  let top_point = end + half_step * perp_vec;
+  let next_point = start + full_step * perp_vec;
+  let top_next_point = end + one_and_one_half_step * perp_vec;
+
+  let base_struct = vec![base_point, next_point, top_point, top_next_point];
+  let base_indexes = vec![0, 1, 2, 1, 3, 2]; // Two triangles
+
+  for base_num in 0..facets {
+    let base_mult = base_num as f32;
+    let rot_matrix = Mat3::from_axis_angle(stem_axis, rot_angle * base_mult);
+    for point in rotate_points(& base_struct, rot_matrix) {
+      mesh.add_vertex(Vertex::pos_only(point.as_ref()));
+    }
+  }
+
+  return mesh;
+}
+
+fn rotate_points(points: & [Pt], transform: Mat3) -> Vec<Pt> {
+  points.iter().map(|& pt| Pt::from_vec(transform * pt.to_vec())).collect()
+}
+
+fn transform_points(points: & [Pt], transform: Mat4) -> Vec<Pt> {
+  points.iter().map(|pt| Pt::from_vec((transform * pt.to_homogeneous()).truncate())).collect()
 }
 
 fn mat4_uniform(mat: & Mat4) -> [[f32; 4]; 4] {
@@ -153,9 +201,9 @@ fn main() {
     let arc_camera_mat = camera.get_transform_mat();
 
     let basic_uniforms = uniform! {
-      u_model_world: mat4_uniform(& model_position),
-      u_world_cam: mat4_uniform(& arc_camera_mat),
-      u_projection: mat4_uniform(& perspective_projection),
+      u_model_world: conv::array4x4(model_position),
+      u_world_cam: conv::array4x4(arc_camera_mat),
+      u_projection: conv::array4x4(perspective_projection),
     };
 
     // Draw

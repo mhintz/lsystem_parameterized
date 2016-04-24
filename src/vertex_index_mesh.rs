@@ -18,6 +18,10 @@ impl VertexIndexMesh {
     }
   }
 
+  pub fn add_point(&mut self, point: Pt) {
+    self.add_vertex(Vertex::pos_only(point.as_ref()));
+  }
+
   pub fn add_vertex(&mut self, vert: Vertex) {
     self.vertices.push(vert);
     let last = self.indices.len() as u32;

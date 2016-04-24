@@ -1,11 +1,12 @@
 [package]
+authors = ["Mark Hintz <markinportland7@gmail.com>"]
 name = "lsystem"
 version = "0.1.0"
-authors = ["Mark Hintz <markinportland7@gmail.com>"]
 
 [dependencies]
+arcball-cgmath = "*"
+cgmath = "*"
 glium = "0.13.5"
-cgmath = "0.8.0"
-arcball-cgmath = "0.3.2"
-num = "0.1"
-matrixstack = "0.1.1"
+glm = "*"
+matrixstack = "*"
+num = "*"
