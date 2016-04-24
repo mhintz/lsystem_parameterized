@@ -11,7 +11,6 @@ mod defs;
 mod vertex;
 mod linemesh;
 mod vertex_index_mesh;
-mod math;
 
 use std::fs::File;
 use std::io::Read;
@@ -96,8 +95,8 @@ pub fn cylinder(start: Pt, end: Pt, facets: u32, radius: f32) -> VertexIndexMesh
   let mut mesh = VertexIndexMesh::new(PrimitiveType::TrianglesList);
 
   let stem_axis = stem_vec.normalize();
-  let full_step = Mat3::from_axis_angle(stem_axis, rot_angle);
   let half_step = Mat3::from_axis_angle(stem_axis, offset_angle);
+  let full_step = Mat3::from_axis_angle(stem_axis, rot_angle);
   let one_and_one_half_step = Mat3::from_axis_angle(stem_axis, rot_angle + offset_angle);
 
   let base_point = start + perp_vec;
@@ -106,13 +105,14 @@ pub fn cylinder(start: Pt, end: Pt, facets: u32, radius: f32) -> VertexIndexMesh
   let top_next_point = end + one_and_one_half_step * perp_vec;
 
   let base_struct = vec![base_point, next_point, top_point, top_next_point];
-  let base_indexes = vec![0, 1, 2, 1, 3, 2]; // Two triangles
+  let base_indices: Vec<usize> = vec![0, 1, 2, 1, 3, 2];
 
   for base_num in 0..facets {
     let base_mult = base_num as f32;
     let rot_matrix = Mat3::from_axis_angle(stem_axis, rot_angle * base_mult);
-    for point in rotate_points(& base_struct, rot_matrix) {
-      mesh.add_vertex(Vertex::pos_only(point.as_ref()));
+    let rotated = rotate_points(& base_struct, rot_matrix);
+    for & idx in & base_indices {
+      mesh.add_vertex(Vertex::pos_only(rotated[idx].as_ref()));
     }
   }
 
@@ -127,8 +127,44 @@ fn transform_points(points: & [Pt], transform: Mat4) -> Vec<Pt> {
   points.iter().map(|pt| Pt::from_vec((transform * pt.to_homogeneous()).truncate())).collect()
 }
 
-fn mat4_uniform(mat: & Mat4) -> [[f32; 4]; 4] {
-  return mat.clone().into();
+fn ls_to_cylinders(word: & [Module]) -> VertexIndexMesh {
+  let mut mesh = VertexIndexMesh::new(PrimitiveType::TrianglesList);
+
+  // lsystem moves by default in the positive-y direction
+  let base_heading = Vec3::new(0.0, 1.0, 0.0);
+  let mut mat_stack: matrixstack::MatrixStack<f32> = matrixstack::MatrixStack::new();
+
+  for item in word {
+    match item.to_draw_command() {
+      DrawCommand::Segment { w: width, l: length } => {
+        let start = mat_stack.origin();
+        mat_stack.transform(Matrix4::from_translation(base_heading * length));
+        let end = mat_stack.origin();
+        mesh.extend_with(& cylinder(start, end, 5, width));
+      },
+      DrawCommand::Forward { d: distance } => {
+        mat_stack.transform(Matrix4::from_translation(base_heading * distance));
+      },
+      DrawCommand::Pitch { r } => {
+        mat_stack.rotate(Matrix3::from_angle_x(Rad::new(r)));
+      },
+      DrawCommand::Yaw { r } => {
+        mat_stack.rotate(Matrix3::from_angle_y(Rad::new(r)));
+      },
+      DrawCommand::Roll { r } => {
+        mat_stack.rotate(Matrix3::from_angle_z(Rad::new(r)));
+      },
+      DrawCommand::Push => {
+        mat_stack.push();
+      },
+      DrawCommand::Pop => {
+        mat_stack.pop();
+      },
+      DrawCommand::None => (),
+    }
+  }
+
+  return mesh;
 }
 
 fn main() {
@@ -148,6 +184,8 @@ fn main() {
   let tree_produced = run_system(& tree_system, 10);
   let tree_line_struct = ls_to_lines(& tree_produced);
 
+  let tree_mesh_struct = ls_to_cylinders(& tree_produced);
+
   // OpenGL setup
   let window = glutin::WindowBuilder::new()
     .with_depth_buffer(24)
@@ -161,6 +199,7 @@ fn main() {
   // let line_buffer = koch_line_struct.to_buffer(& window);
   // let line_buffer = dragon_line_struct.to_buffer(& window);
   let line_buffer = tree_line_struct.to_buffer(& window);
+  let mesh_buffer = tree_mesh_struct.to_buffer(& window);
 
   // Vertex Shader
   let mut vert_shader_file = File::open("src/shader/base.vs").unwrap();
@@ -180,7 +219,7 @@ fn main() {
   camera.set_distance(30.0)
     .set_spin_speed(5.0);
   let model_position = Mat4::from_translation(Vec3::new(0.0, 0.0, 0.0));
-  let perspective_projection: Mat4 = cgmath::perspective(cgmath::Deg::new(40.0), ASPECT_RATIO, NEAR_PLANE_Z, FAR_PLANE_Z);
+  let perspective_projection: Mat4 = cgmath::perspective(cgmath::Deg::new(36.0), ASPECT_RATIO, NEAR_PLANE_Z, FAR_PLANE_Z);
 
   let draw_params = glium::draw_parameters::DrawParameters {
     backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
@@ -209,6 +248,8 @@ fn main() {
     // Draw
 
     target.draw(& line_buffer.vertices, & line_buffer.indices, & basic_program, & basic_uniforms, & draw_params).unwrap();
+
+    target.draw(& mesh_buffer.vertices, & mesh_buffer.indices, & basic_program, & basic_uniforms, & draw_params).unwrap();
 
     // koch_line_struct.draw(& target, & basic_program, & basic_uniforms, & draw_params);
 

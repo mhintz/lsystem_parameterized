@@ -1,7 +1,10 @@
-use glium::index::PrimitiveType;
+use glium::backend::Facade;
+use glium::index::{PrimitiveType, IndexBuffer};
+use glium::vertex::VertexBuffer;
 
 use defs::*;
 use vertex::*;
+use bufferset::BufferSet;
 
 pub struct VertexIndexMesh {
   pub vertices: Vec<Vertex>,
@@ -26,5 +29,20 @@ impl VertexIndexMesh {
     self.vertices.push(vert);
     let last = self.indices.len() as u32;
     self.indices.push(last);
+  }
+
+  /// Assumes that the primitive type is the same
+  pub fn extend_with(&mut self, other: & VertexIndexMesh) {
+    let num_verts = self.vertices.len() as u32;
+    for vert in & other.vertices {
+      self.vertices.push(* vert);
+    }
+    for index in & other.indices {
+      self.indices.push(num_verts + index);
+    }
+  }
+
+  pub fn to_buffer<T: Facade>(& self, gl: & T) -> BufferSet {
+    BufferSet::from_vertex_index(gl, self.primtype, self)
   }
 }
