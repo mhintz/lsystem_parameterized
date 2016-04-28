@@ -184,12 +184,15 @@ impl LSystem for BasicTree {
   }
 }
 
-pub struct BranchingTree;
+pub struct BranchingTree {
+  pub base_width: f32,
+  pub base_length: f32,
+}
 
 impl LSystem for BranchingTree {
   fn axiom(& self) -> Vec<Module> {
     vec![
-      branch(1.0, 2.0, 1),
+      trunk(self.base_width, 2.0 * self.base_length, 5),
       apex(),
     ]
   }
@@ -197,36 +200,39 @@ impl LSystem for BranchingTree {
   fn produce(& self, module: Module) -> Vec<Module> {
       match module {
           Module::Branch { w, l, life } | Module::Trunk { w, l, life } => {
-              let new_length = if life > 0 { l * 1.3 } else { l };
-              let new_life = if life > 0 { life - 1 } else { 0 };
-              vec![branch(w, new_length, new_life)]
+              let (new_width, new_length, new_life) = if life > 0 {
+                (w * 1.3, l * 1.3, life - 1)
+              } else {
+                (w, l, 0)
+              };
+              vec![branch(new_width, new_length, new_life)]
           },
           Module::Apex => vec![
             push(),
             roll(-30.0_f32.to_radians()),
-            trunk(1.0, 1.0, 3),
+            trunk(self.base_width, self.base_length, 3),
             custom_none(1),
             pop(),
             push(),
             roll(30.0_f32.to_radians()),
-            branch(1.0, 1.0, 3),
+            branch(self.base_width, self.base_length, 3),
             custom_none(1),
             pop(),
             yaw((PHI_RECIP * 360.0_f32).to_radians()),
-            branch(1.0, 1.0, 3),
+            branch(self.base_width, self.base_length, 3),
             apex(),
           ],
           Module::Custom(1, _) => vec![
             push(),
             roll(-30.0_f32.to_radians()),
-            branch(1.0, 0.85, 2),
+            branch(self.base_width, 0.85 * self.base_length, 2),
             pop(),
             push(),
             roll(30.0_f32.to_radians()),
-            branch(1.0, 0.85, 2),
+            branch(self.base_width, 0.85 * self.base_length, 2),
             pop(),
             yaw((PHI_COMPLEMENT * 360.0_f32).to_radians()),
-            branch(1.0, 0.85, 2),
+            branch(self.base_width, 0.85 * self.base_length, 2),
             custom_none(1),
           ],
           _ => vec![module],

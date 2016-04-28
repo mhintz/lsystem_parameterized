@@ -87,30 +87,31 @@ pub fn cylinder(start: Pt, end: Pt, facets: u32, radius: f32) -> VertexIndexMesh
   let rot_angle = Rad::full_turn() / (facets as f32);
   let offset_angle = rot_angle / 2.0;
 
-  let stem_vec = end - start;
+  let stem_axis = (end - start).normalize();
   // If the vector happens to be the x axis, the cross product won't work
-  let cross_vec = if stem_vec == Vec3::unit_x() { Vec3::unit_y() } else { Vec3::unit_x() };
-  let perp_vec = stem_vec.cross(cross_vec).normalize_to(radius);
+  let cross_vec = if stem_axis == Vec3::unit_x() { Vec3::unit_y() } else { Vec3::unit_x() };
+  // let perp_vec = stem_axis.cross(cross_vec).normalize_to(radius);
+  let perp_vec = stem_axis.cross(cross_vec).normalize_to(radius);
 
   let mut mesh = VertexIndexMesh::new(PrimitiveType::TrianglesList);
 
-  let stem_axis = stem_vec.normalize();
   let half_step = Mat3::from_axis_angle(stem_axis, offset_angle);
   let full_step = Mat3::from_axis_angle(stem_axis, rot_angle);
   let one_and_one_half_step = Mat3::from_axis_angle(stem_axis, rot_angle + offset_angle);
 
   let base_point = start + perp_vec;
-  let top_point = end + half_step * perp_vec;
-  let next_point = start + full_step * perp_vec;
-  let top_next_point = end + one_and_one_half_step * perp_vec;
+  let top_point = end + (half_step * perp_vec);
+  let next_point = start + (full_step * perp_vec);
+  let top_next_point = end + (one_and_one_half_step * perp_vec);
 
-  let base_struct = vec![base_point, next_point, top_point, top_next_point];
-  let base_indices: Vec<usize> = vec![0, 1, 2, 1, 3, 2];
+  let base_struct = vec![start, base_point, next_point, top_point, top_next_point, end];
+  // bottom, left tri, right tri, top
+  let base_indices: Vec<usize> = vec![0, 2, 1, 1, 2, 3, 2, 4, 3, 3, 4, 5];
 
   for base_num in 0..facets {
     let base_mult = base_num as f32;
-    let rot_matrix = Mat3::from_axis_angle(stem_axis, rot_angle * base_mult);
-    let rotated = rotate_points(& base_struct, rot_matrix);
+    let rot_matrix = Mat4::from_translation(start.to_vec()) * Mat4::from_axis_angle(stem_axis, rot_angle * base_mult) * Mat4::from_translation(-start.to_vec());
+    let rotated = transform_points(& base_struct, rot_matrix);
     for & idx in & base_indices {
       mesh.add_vertex(Vertex::pos_only(rotated[idx].as_ref()));
     }
@@ -140,7 +141,7 @@ fn ls_to_cylinders(word: & [Module]) -> VertexIndexMesh {
         let start = mat_stack.origin();
         mat_stack.transform(Matrix4::from_translation(base_heading * length));
         let end = mat_stack.origin();
-        mesh.extend_with(& cylinder(start, end, 5, width));
+        mesh.extend_with(& cylinder(start, end, 8, width / 2.0));
       },
       DrawCommand::Forward { d: distance } => {
         mat_stack.transform(Matrix4::from_translation(base_heading * distance));
@@ -167,6 +168,13 @@ fn ls_to_cylinders(word: & [Module]) -> VertexIndexMesh {
   return mesh;
 }
 
+fn get_file_string(filename: & str) -> String {
+  let mut file_obj = File::open(filename).unwrap();
+  let mut storage = String::new();
+  file_obj.read_to_string(&mut storage).unwrap();
+  storage
+}
+
 fn main() {
   // let koch_system = KochCurve {};
   // let koch_produced = run_system(& koch_system, NUM_ITERATIONS);
@@ -180,11 +188,18 @@ fn main() {
   // let tree_produced = run_system(& tree_system, NUM_ITERATIONS);
   // let tree_line_struct = ls_to_lines(& tree_produced);
 
-  let tree_system = BranchingTree {};
+  let tree_system = BranchingTree {
+    base_width: 0.15,
+    base_length: 1.0,
+  };
   let tree_produced = run_system(& tree_system, 10);
   let tree_line_struct = ls_to_lines(& tree_produced);
 
   let tree_mesh_struct = ls_to_cylinders(& tree_produced);
+
+  let ex_start = Pt::new(0.0, 1.0, 0.0);
+  let ex_end = Pt::new(5.0, 10.0, 0.0);
+  let cylinder_example = cylinder(ex_start, ex_end, 5, 1.0);
 
   // OpenGL setup
   let window = glutin::WindowBuilder::new()
@@ -200,19 +215,11 @@ fn main() {
   // let line_buffer = dragon_line_struct.to_buffer(& window);
   let line_buffer = tree_line_struct.to_buffer(& window);
   let mesh_buffer = tree_mesh_struct.to_buffer(& window);
-
-  // Vertex Shader
-  let mut vert_shader_file = File::open("src/shader/base.vs").unwrap();
-  let mut vert_shader = String::new();
-  vert_shader_file.read_to_string(&mut vert_shader).unwrap();
-
-  // Fragment Shader
-  let mut frag_shader_file = File::open("src/shader/base.fs").unwrap();
-  let mut frag_shader = String::new();
-  frag_shader_file.read_to_string(&mut frag_shader).unwrap();
+  let cylinder_buffer = cylinder_example.to_buffer(& window);
 
   // Shader Program
-  let basic_program = glium::Program::from_source(& window, & vert_shader, & frag_shader, None).unwrap();
+  let basic_program = glium::Program::from_source(& window, & get_file_string("src/shader/base.vs"), & get_file_string("src/shader/base.fs"), None).unwrap();
+  let flat_shaded_program = glium::Program::from_source(& window, & get_file_string("src/shader/base.vs"), & get_file_string("src/shader/flatshaded.fs"), None).unwrap();
 
   // Matrices
   let mut camera: arcball_cgmath::ArcballCamera<f32> = arcball_cgmath::ArcballCamera::new();
@@ -243,15 +250,16 @@ fn main() {
       u_model_world: conv::array4x4(model_position),
       u_world_cam: conv::array4x4(arc_camera_mat),
       u_projection: conv::array4x4(perspective_projection),
+      u_cam_pos: conv::array3(camera.get_position()),
     };
 
     // Draw
 
-    target.draw(& line_buffer.vertices, & line_buffer.indices, & basic_program, & basic_uniforms, & draw_params).unwrap();
+    // target.draw(& line_buffer.vertices, & line_buffer.indices, & basic_program, & basic_uniforms, & draw_params).unwrap();
 
-    target.draw(& mesh_buffer.vertices, & mesh_buffer.indices, & basic_program, & basic_uniforms, & draw_params).unwrap();
+    target.draw(& mesh_buffer.vertices, & mesh_buffer.indices, & flat_shaded_program, & basic_uniforms, & draw_params).unwrap();
 
-    // koch_line_struct.draw(& target, & basic_program, & basic_uniforms, & draw_params);
+    // target.draw(& cylinder_buffer.vertices, & cylinder_buffer.indices, & flat_shaded_program, & basic_uniforms, & draw_params).unwrap();
 
     target.finish().unwrap();
 
