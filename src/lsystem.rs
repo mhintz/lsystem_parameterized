@@ -76,7 +76,7 @@ pub trait LSystem {
   fn produce(& self, module: Module) -> Vec<Module>;
 }
 
-pub fn iterate_system(lsystem: & LSystem, word: Vec<Module>) -> Vec<Module> {
+pub fn iterate_system<T: LSystem>(lsystem: T, word: Vec<Module>) -> Vec<Module> {
   word.iter().flat_map(|letter| lsystem.produce(* letter)).collect()
 }
 
@@ -84,7 +84,7 @@ fn split_vec(thevec: Vec<Module>, numsplits: usize) -> Vec<Vec<Module>> {
   thevec.chunks(numsplits).map(|chunk| { chunk.to_vec() }).collect()
 }
 
-pub fn run_system<T: LSystem + Send + Sync>(lsystem: &'static T, iterations: u32) -> Vec<Module> {
+pub fn run_system<T: LSystem + Send + Copy + 'static>(lsystem: T, iterations: u32) -> Vec<Module> {
   let mut word = lsystem.axiom();
 
   for _ in 0..iterations {
@@ -103,6 +103,7 @@ pub fn run_system<T: LSystem + Send + Sync>(lsystem: &'static T, iterations: u32
   word
 }
 
+#[derive(Copy, Clone)]
 pub struct KochCurve;
 
 impl LSystem for KochCurve {
@@ -134,6 +135,7 @@ impl LSystem for KochCurve {
   }
 }
 
+#[derive(Copy, Clone)]
 pub struct DragonCurve;
 
 impl LSystem for DragonCurve {
@@ -152,6 +154,7 @@ impl LSystem for DragonCurve {
   }
 }
 
+#[derive(Copy, Clone)]
 pub struct BasicTree;
 
 impl LSystem for BasicTree {
@@ -202,6 +205,7 @@ impl LSystem for BasicTree {
   }
 }
 
+#[derive(Copy, Clone)]
 pub struct BranchingTree {
   pub base_width: f32,
   pub base_length: f32,
