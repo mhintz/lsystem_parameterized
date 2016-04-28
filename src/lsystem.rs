@@ -1,3 +1,6 @@
+use std::thread;
+use std::sync::Arc;
+
 const PHI: f32 = 1.61803398875;
 const PHI_RECIP: f32 = 1.0 / PHI;
 const PHI_COMPLEMENT: f32 = 1.0 - PHI_RECIP;
@@ -73,15 +76,30 @@ pub trait LSystem {
   fn produce(& self, module: Module) -> Vec<Module>;
 }
 
-pub fn run_system(lsystem: & LSystem, iterations: u32) -> Vec<Module> {
+pub fn iterate_system(lsystem: & LSystem, word: Vec<Module>) -> Vec<Module> {
+  word.iter().flat_map(|letter| lsystem.produce(* letter)).collect()
+}
+
+fn split_vec(thevec: Vec<Module>, numsplits: usize) -> Vec<Vec<Module>> {
+  thevec.chunks(numsplits).map(|chunk| { chunk.to_vec() }).collect()
+}
+
+pub fn run_system<T: LSystem + Send + Sync>(lsystem: &'static T, iterations: u32) -> Vec<Module> {
   let mut word = lsystem.axiom();
+
   for _ in 0..iterations {
-    let mut collector: Vec<Module> = vec![];
-    for letter in word {
-      collector.extend(lsystem.produce(letter));
-    }
-    word = collector;
+    static TARGET_THREAD_NUM: u8 = 8;
+    let chunk_size = (word.len() as f32 / TARGET_THREAD_NUM as f32).ceil() as usize;
+
+    // The type here is Vec<thread::JoinHandle<Vec<Module>>>
+    let threads: Vec<_> = split_vec(word, chunk_size)
+      .into_iter()
+      .map(|chunk| { thread::spawn(move || { iterate_system(lsystem, chunk) }) })
+      .collect();
+
+    word = threads.into_iter().flat_map(|t| t.join().unwrap()).collect();
   }
+
   word
 }
 

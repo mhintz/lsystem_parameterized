@@ -33,7 +33,7 @@ const WINDOW_WIDTH: u32 = 800;
 const WINDOW_HEIGHT: u32 = 800;
 const ASPECT_RATIO: f32 = (WINDOW_WIDTH as f32) / (WINDOW_HEIGHT as f32);
 const NEAR_PLANE_Z: f32 = 0.001;
-const FAR_PLANE_Z: f32 = 1000.0;
+const FAR_PLANE_Z: f32 = 10000.0;
 
 const NUM_ITERATIONS: u32 = 6;
 
@@ -179,27 +179,22 @@ fn main() {
   // let koch_system = KochCurve {};
   // let koch_produced = run_system(& koch_system, NUM_ITERATIONS);
   // let koch_line_struct = ls_to_lines(& koch_produced);
-  //
-  // let dragon_system = DragonCurve {};
-  // let dragon_produced = run_system(& dragon_system, NUM_ITERATIONS);
-  // let dragon_line_struct = ls_to_lines(& dragon_produced);
+
+  static dragon_system: DragonCurve = DragonCurve {};
+  let dragon_produced = run_system(& dragon_system, 20);
+  let dragon_line_struct = ls_to_lines(& dragon_produced);
 
   // let tree_system = BasicTree {};
   // let tree_produced = run_system(& tree_system, NUM_ITERATIONS);
   // let tree_line_struct = ls_to_lines(& tree_produced);
 
-  let tree_system = BranchingTree {
+  static tree_system: BranchingTree = BranchingTree {
     base_width: 0.15,
     base_length: 1.0,
   };
-  let tree_produced = run_system(& tree_system, 10);
+  let tree_produced = run_system(& tree_system, 40);
   let tree_line_struct = ls_to_lines(& tree_produced);
-
   let tree_mesh_struct = ls_to_cylinders(& tree_produced);
-
-  let ex_start = Pt::new(0.0, 1.0, 0.0);
-  let ex_end = Pt::new(5.0, 10.0, 0.0);
-  let cylinder_example = cylinder(ex_start, ex_end, 5, 1.0);
 
   // OpenGL setup
   let window = glutin::WindowBuilder::new()
@@ -212,10 +207,9 @@ fn main() {
   let mut pan_button_pressed: bool = false;
 
   // let line_buffer = koch_line_struct.to_buffer(& window);
-  // let line_buffer = dragon_line_struct.to_buffer(& window);
-  let line_buffer = tree_line_struct.to_buffer(& window);
-  let mesh_buffer = tree_mesh_struct.to_buffer(& window);
-  let cylinder_buffer = cylinder_example.to_buffer(& window);
+  let line_buffer = dragon_line_struct.to_buffer(& window);
+  // let line_buffer = tree_line_struct.to_buffer(& window);
+  // let mesh_buffer = tree_mesh_struct.to_buffer(& window);
 
   // Shader Program
   let basic_program = glium::Program::from_source(& window, & get_file_string("src/shader/base.vs"), & get_file_string("src/shader/base.fs"), None).unwrap();
@@ -255,11 +249,9 @@ fn main() {
 
     // Draw
 
-    // target.draw(& line_buffer.vertices, & line_buffer.indices, & basic_program, & basic_uniforms, & draw_params).unwrap();
+    target.draw(& line_buffer.vertices, & line_buffer.indices, & basic_program, & basic_uniforms, & draw_params).unwrap();
 
-    target.draw(& mesh_buffer.vertices, & mesh_buffer.indices, & flat_shaded_program, & basic_uniforms, & draw_params).unwrap();
-
-    // target.draw(& cylinder_buffer.vertices, & cylinder_buffer.indices, & flat_shaded_program, & basic_uniforms, & draw_params).unwrap();
+    // target.draw(& mesh_buffer.vertices, & mesh_buffer.indices, & flat_shaded_program, & basic_uniforms, & draw_params).unwrap();
 
     target.finish().unwrap();
 
