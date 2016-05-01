@@ -1,3 +1,5 @@
+use cgmath::prelude::*;
+
 use defs::*;
 
 #[derive(Copy, Clone, Debug)]
@@ -47,6 +49,24 @@ impl Vertex {
       a_tex: [0.0; 2],
     }
   }
+
+  pub fn pos(&self) -> Pt { Pt::from(self.a_pos) }
+
+  pub fn color(&self) -> Vec4 { Vec4::from(self.a_color) }
+
+  pub fn normal(&self) -> Vec3 { Vec3::from(self.a_norm) }
+
+  pub fn tex(&self) -> Vec2 { Vec2::from(self.a_tex) }
+
+  pub fn set_pos(&mut self, pos: Pt) { self.a_pos = pos.into() }
+
+  pub fn set_color(&mut self, color: Vec4) { self.a_color = color.into() }
+
+  pub fn set_normal(&mut self, norm: Vec3) { self.a_norm = norm.into() }
+
+  pub fn normalize_normal(&mut self) { self.a_norm = Vec3::from(self.a_norm).normalize().into() }
+
+  pub fn set_tex(&mut self, tex: Vec2) { self.a_tex = tex.into() }
 }
 
 #[derive(Copy, Clone, Debug)]
