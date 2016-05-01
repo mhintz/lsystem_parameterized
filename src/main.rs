@@ -194,7 +194,8 @@ fn main() {
   };
   let tree_produced = run_system(tree_system, 40);
   let tree_line_struct = ls_to_lines(& tree_produced);
-  let tree_mesh_struct = ls_to_cylinders(& tree_produced);
+  let mut tree_mesh_struct = ls_to_cylinders(& tree_produced);
+  tree_mesh_struct.recompute_normals();
 
   // OpenGL setup
   let window = glutin::WindowBuilder::new()
