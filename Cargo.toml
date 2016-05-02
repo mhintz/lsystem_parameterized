@@ -4,9 +4,8 @@ name = "lsystem"
 version = "0.1.0"
 
 [dependencies]
-arcball-cgmath = "*"
+arcball-cgmath = { path = "../arcball-cgmath", branch = "master" }
 cgmath = { path = "../cgmath-rs", branch = "unified" }
 glium = "0.13.5"
-glm = "*"
-matrixstack = "*"
+matrixstack = { path = "../matrixstack", branch = "master" }
 num = "*"

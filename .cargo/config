@@ -1,1 +1,1 @@
-paths = ["../cgmath-rs", "../matrixstack", "../arcball-cgmath"]
+paths = ["../cgmath-rs"]
