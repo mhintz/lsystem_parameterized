@@ -188,7 +188,7 @@ fn main() {
   // let tree_line_struct = ls_to_lines(& tree_produced);
   // let tree_mesh_struct = ls_to_cylinders(& tree_produced);
 
-  static tree_system: BranchingTree = BranchingTree {
+  let tree_system: BranchingTree = BranchingTree {
     base_width: 0.15,
     base_length: 1.0,
   };
