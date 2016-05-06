@@ -51,7 +51,8 @@ pub enum Module {
   Yaw { r: f32 },
   Push,
   Pop,
-  Apex, // Generation point for plant organs
+  TrunkApex, // Generation point for plant organs - on the trunk
+  BranchApex, // Generation point for plant organs - on a branch
   Trunk { w: f32, l: f32, life: u8 }, // Trunk of the tree
   Branch { w: f32, l: f32, life: u8 }, // Creates a straight branch with width w and length l
   Custom(u8, DrawCommand), // Can be used for any custom element
@@ -65,7 +66,8 @@ impl Module {
       Module::Yaw { r } => yaw_cmd(r),
       Module::Push => push_cmd(),
       Module::Pop => pop_cmd(),
-      Module::Apex => none_cmd(),
+      Module::TrunkApex => none_cmd(),
+      Module::BranchApex => none_cmd(),
       Module::Trunk { w, l, .. } => segment_cmd(w, l),
       Module::Branch { w, l, .. } => segment_cmd(w, l),
       Module::Custom(_, cmd) => cmd,
@@ -78,7 +80,8 @@ pub fn pitch(r: f32) -> Module { Module::Pitch { r: r } }
 pub fn yaw(r: f32) -> Module { Module::Yaw { r: r } }
 pub fn push() -> Module { Module::Push }
 pub fn pop() -> Module { Module::Pop }
-pub fn apex() -> Module { Module::Apex }
+pub fn trunk_apex() -> Module { Module::TrunkApex }
+pub fn branch_apex() -> Module { Module::BranchApex }
 pub fn trunk(w: f32, l: f32, life: u8) -> Module { Module::Trunk { w: w, l: l, life: life } }
 pub fn branch(w: f32, l: f32, life: u8) -> Module { Module::Branch { w: w, l: l, life: life } }
 pub fn custom(num: u8, cmd: DrawCommand) -> Module { Module::Custom(num, cmd) }
@@ -176,14 +179,14 @@ impl LSystem for BasicTree {
   fn axiom(& self) -> Vec<Module> {
     vec![
       branch(1.0, 2.0, 1),
-      apex(),
+      trunk_apex(),
     ]
   }
 
   fn produce(& self, module: Module) -> Vec<Module> {
     match module {
       Module::Branch { w: width, l: length, life } => vec![branch(width, length * 1.15, life)],
-      Module::Apex => { // Trunk apex
+      Module::TrunkApex => { // Trunk apex
         vec![
           // Left branch
           push(),
@@ -201,6 +204,7 @@ impl LSystem for BasicTree {
           apex(),
         ]
       },
+      Module::BranchApex => vec![module],
       Module::Custom(2, _) => { // Branch apex left
         vec![
           roll(25.0_f32.to_radians()),
@@ -230,7 +234,7 @@ impl LSystem for BranchingTree {
   fn axiom(& self) -> Vec<Module> {
     vec![
       trunk(self.base_width, 2.0 * self.base_length, 5),
-      apex(),
+      trunk_apex(),
     ]
   }
 
@@ -244,7 +248,7 @@ impl LSystem for BranchingTree {
               };
               vec![branch(new_width, new_length, new_life)]
           },
-          Module::Apex => vec![
+          Module::TrunkApex => vec![
             push(),
             roll(-30.0_f32.to_radians()),
             trunk(self.base_width, self.base_length, 3),
@@ -259,6 +263,7 @@ impl LSystem for BranchingTree {
             branch(self.base_width, self.base_length, 3),
             apex(),
           ],
+          Module::BranchApex => vec![module],
           Module::Custom(1, _) => vec![
             push(),
             roll(-30.0_f32.to_radians()),
