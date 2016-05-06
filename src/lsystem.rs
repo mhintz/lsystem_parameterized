@@ -68,9 +68,9 @@ pub fn custom(num: u8, cmd: DrawCommand) -> Module { Module::Custom(num, cmd) }
 pub fn custom_none(num: u8) -> Module { Module::Custom(num, DrawCommand::None) }
 
 pub trait LSystem {
-  // / The type for the modules of the l-system. These modules are the constituent
-  // / parts of the system, which is composed of strings of this type, plus rules for
-  // / generation of new strings from the existing modules
+  /// The type for the modules of the l-system. These modules are the constituent
+  /// parts of the system, which is composed of strings of this type, plus rules for
+  /// generation of new strings from the existing modules
   type Module: Copy + Clone + Send;
   /// Provides the initial axiom, the "seed" of the lsystem
   fn axiom(& self) -> Vec<Self::Module>;
@@ -78,30 +78,49 @@ pub trait LSystem {
   fn produce(& self, module: Self::Module) -> Vec<Self::Module>;
 }
 
-pub fn iterate_system<T: LSystem>(lsystem: T, word: Vec<T::Module>) -> Vec<T::Module> {
-  word.iter().flat_map(|letter| lsystem.produce(* letter)).collect()
-}
-
+// Split up a vector into discrete chunks. This function could probably be optimized
 fn split_vec<T: Clone>(thevec: Vec<T>, numsplits: usize) -> Vec<Vec<T>> {
   thevec.chunks(numsplits).map(|chunk| { chunk.to_vec() }).collect()
 }
 
+// Iterate over an lsystem word, producing a new vector of modules for each module in the word,
+// then collect these modules together
+pub fn iterate_system<T: LSystem>(lsystem: T, word: Vec<T::Module>) -> Vec<T::Module> {
+  word.iter().flat_map(|letter| lsystem.produce(* letter)).collect()
+}
+
+/// Multi-threaded l-system processing - splits each iteration of the l-system into several chunks,
+/// spawns a thread to process each chunk, and then joins all the results.
+/// The upside of this is dramatically improved performance.
+/// The downside is that under the current implementation, context-sensitive l-systems are not possible.
+/// Theoretically, it should be possible to implement these, by including a certain
+/// number of "padding" modules on either end of a split chunk. Processing each module would then take into
+/// account the contents of this padding, without actually processing it. Modules in the middle of the chunk would be
+/// processed with context as usual. This approach is obviously more complex, and not needed for my purposes at the moment.
 pub fn run_system<T: LSystem + Send + Copy + 'static>(lsystem: T, iterations: u32) -> Vec<T::Module> {
+  // Start with the l-system's axiom
   let mut word = lsystem.axiom();
 
   for _ in 0..iterations {
+    // Could make this configurable; this seemed like a sensible default
     static TARGET_THREAD_NUM: u8 = 8;
+    // Calculate an appropriate split size on which to split up the word
     let chunk_size = (word.len() as f32 / TARGET_THREAD_NUM as f32).ceil() as usize;
 
-    // The type here is Vec<thread::JoinHandle<Vec<T::Module>>>
+    // The type of this expression is Vec<thread::JoinHandle<Vec<T::Module>>>
     let threads: Vec<_> = split_vec(word, chunk_size)
+      // Take ownership of the split vector's contents
       .into_iter()
+      // Grabs the lsystem local variable, spawns a thread to process each chunk of the split up vector
       .map(|chunk| { thread::spawn(move || { iterate_system(lsystem, chunk) }) })
       .collect();
 
+    // iterate over the JoinHandles and join each one, which waits for its thread
+    // to finish processing its vector of modules.
     word = threads.into_iter().flat_map(|t| t.join().unwrap()).collect();
   }
 
+  // word.
   word
 }
 
