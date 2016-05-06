@@ -7,6 +7,8 @@ dependencies = [
  "glium 0.13.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "matrixstack 0.1.2",
  "num 0.1.32 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits 0.1.32 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

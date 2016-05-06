@@ -10,4 +10,4 @@ glium = "0.13.5"
 matrixstack = { path = "../matrixstack", branch = "master" }
 num = "*"
 rand = "0.3"
-num_traits = "0.1"
+num-traits = "0.1"
