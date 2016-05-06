@@ -1,9 +1,24 @@
 use std::thread;
 use std::sync::Arc;
 
+use rand;
+use num_traits::Float;
+
 const PHI: f32 = 1.61803398875;
 const PHI_RECIP: f32 = 1.0 / PHI;
 const PHI_COMPLEMENT: f32 = 1.0 - PHI_RECIP;
+
+fn random01<T: Float>() -> T {
+  rand::random() / T::max_value()
+}
+
+fn random<T: Float>(lo: T, hi: T) -> T {
+  lo + random01() * (hi - lo)
+}
+
+fn randomMax<T: Float>(hi: T) -> T {
+  random01() * hi
+}
 
 #[derive(Copy, Clone, Debug)]
 pub enum DrawCommand {

@@ -3,6 +3,8 @@ extern crate glium;
 extern crate cgmath;
 extern crate arcball_cgmath;
 extern crate matrixstack;
+extern crate rand;
+extern crate num_traits;
 
 mod lsystem;
 mod bufferset;
