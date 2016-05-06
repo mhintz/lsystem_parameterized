@@ -8,6 +8,8 @@ use lsystem::*;
 pub struct KochCurve;
 
 impl LSystem for KochCurve {
+  type Module = Module;
+
   fn axiom(& self) -> Vec<Module> {
     vec![
       branch(1.0, 27.0, 1),
@@ -40,6 +42,8 @@ impl LSystem for KochCurve {
 pub struct DragonCurve;
 
 impl LSystem for DragonCurve {
+  type Module = Module;
+
   fn axiom(& self) -> Vec<Module> {
     vec![
       custom(1, segment_cmd(1.0, 1.0))
@@ -59,6 +63,8 @@ impl LSystem for DragonCurve {
 pub struct BasicTree;
 
 impl LSystem for BasicTree {
+  type Module = Module;
+
   fn axiom(& self) -> Vec<Module> {
     vec![
       branch(1.0, 2.0, 1),
@@ -114,6 +120,8 @@ pub struct BranchingTree {
 }
 
 impl LSystem for BranchingTree {
+  type Module = Module;
+
   fn axiom(& self) -> Vec<Module> {
     vec![
       trunk(self.base_width, 2.0 * self.base_length, 5),

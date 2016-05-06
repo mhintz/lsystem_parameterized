@@ -68,28 +68,32 @@ pub fn custom(num: u8, cmd: DrawCommand) -> Module { Module::Custom(num, cmd) }
 pub fn custom_none(num: u8) -> Module { Module::Custom(num, DrawCommand::None) }
 
 pub trait LSystem {
+  // / The type for the modules of the l-system. These modules are the constituent
+  // / parts of the system, which is composed of strings of this type, plus rules for
+  // / generation of new strings from the existing modules
+  type Module: Copy + Clone + Send;
   /// Provides the initial axiom, the "seed" of the lsystem
-  fn axiom(& self) -> Vec<Module>;
+  fn axiom(& self) -> Vec<Self::Module>;
   /// Implement custom versions of this function to produce new chains of modules from an existing module
-  fn produce(& self, module: Module) -> Vec<Module>;
+  fn produce(& self, module: Self::Module) -> Vec<Self::Module>;
 }
 
-pub fn iterate_system<T: LSystem>(lsystem: T, word: Vec<Module>) -> Vec<Module> {
+pub fn iterate_system<T: LSystem>(lsystem: T, word: Vec<T::Module>) -> Vec<T::Module> {
   word.iter().flat_map(|letter| lsystem.produce(* letter)).collect()
 }
 
-fn split_vec(thevec: Vec<Module>, numsplits: usize) -> Vec<Vec<Module>> {
+fn split_vec<T: Clone>(thevec: Vec<T>, numsplits: usize) -> Vec<Vec<T>> {
   thevec.chunks(numsplits).map(|chunk| { chunk.to_vec() }).collect()
 }
 
-pub fn run_system<T: LSystem + Send + Copy + 'static>(lsystem: T, iterations: u32) -> Vec<Module> {
+pub fn run_system<T: LSystem + Send + Copy + 'static>(lsystem: T, iterations: u32) -> Vec<T::Module> {
   let mut word = lsystem.axiom();
 
   for _ in 0..iterations {
     static TARGET_THREAD_NUM: u8 = 8;
     let chunk_size = (word.len() as f32 / TARGET_THREAD_NUM as f32).ceil() as usize;
 
-    // The type here is Vec<thread::JoinHandle<Vec<Module>>>
+    // The type here is Vec<thread::JoinHandle<Vec<T::Module>>>
     let threads: Vec<_> = split_vec(word, chunk_size)
       .into_iter()
       .map(|chunk| { thread::spawn(move || { iterate_system(lsystem, chunk) }) })
