@@ -12,6 +12,7 @@ mod defs;
 mod vertex;
 mod linemesh;
 mod vertex_index_mesh;
+mod trees;
 
 use std::fs::File;
 use std::io::Read;
@@ -24,6 +25,7 @@ use glium::index::PrimitiveType;
 use cgmath::*;
 
 use lsystem::*;
+use trees::*;
 use bufferset::*;
 use defs::*;
 use linemesh::LineMesh;
