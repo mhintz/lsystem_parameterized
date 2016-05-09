@@ -1,5 +1,5 @@
 use std::{f32, f64};
-use num_traits::Float;
+use cgmath::num_traits::Float;
 
 use lsystem::*;
 use rand_util::{random_max};

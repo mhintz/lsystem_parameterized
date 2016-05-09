@@ -1,5 +1,5 @@
 use rand;
-use num_traits::Float;
+use cgmath::num_traits::Float;
 
 pub use rand::random;
 

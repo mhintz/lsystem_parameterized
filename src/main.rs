@@ -4,7 +4,6 @@ extern crate cgmath;
 extern crate arcball_cgmath;
 extern crate matrixstack;
 extern crate rand;
-extern crate num_traits;
 
 mod lsystem;
 mod bufferset;
@@ -71,7 +70,7 @@ pub fn ls_to_lines(word: &[Module]) -> LineMesh {
         mat_stack.rotate(Matrix3::from_angle_y(Rad::new(r)));
       },
       DrawCommand::Euler { x, y, z } => {
-        mat_stack.rotate(Matrix3::from_euler(Rad::new(x), Rad::new(y), Rad::new(z)));
+        mat_stack.rotate(Matrix3::from(Euler::new(Rad::new(x), Rad::new(y), Rad::new(z))));
       },
       DrawCommand::Push => {
         mat_stack.push();
@@ -163,7 +162,7 @@ fn ls_to_cylinders(word: & [Module]) -> VertexIndexMesh {
         mat_stack.rotate(Matrix3::from_angle_z(Rad::new(r)));
       },
       DrawCommand::Euler { x, y, z } => {
-        mat_stack.rotate(Matrix3::from_euler(Rad::new(x), Rad::new(y), Rad::new(z)));
+        mat_stack.rotate(Matrix3::from(Euler::new(Rad::new(x), Rad::new(y), Rad::new(z))));
       },
       DrawCommand::Push => {
         mat_stack.push();
