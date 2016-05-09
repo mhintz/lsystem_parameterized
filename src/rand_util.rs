@@ -1,14 +1,12 @@
 use rand;
 use num_traits::Float;
 
-pub fn random01<T: Float>() -> T {
-  rand::random() / T::max_value()
+pub use rand::random;
+
+pub fn random_lohi<T: Float + rand::Rand>(lo: T, hi: T) -> T {
+  lo + random::<T>() * (hi - lo)
 }
 
-pub fn random<T: Float>(lo: T, hi: T) -> T {
-  lo + random01() * (hi - lo)
-}
-
-pub fn randomMax<T: Float>(hi: T) -> T {
-  random01() * hi
+pub fn random_max<T: Float + rand::Rand>(hi: T) -> T {
+  random::<T>() * hi
 }
