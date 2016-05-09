@@ -1,6 +1,5 @@
 use glium::backend::Facade;
-use glium::index::{PrimitiveType, IndexBuffer};
-use glium::vertex::VertexBuffer;
+use glium::index::{PrimitiveType};
 
 use cgmath::prelude::*;
 
@@ -56,8 +55,8 @@ impl VertexIndexMesh {
       let normal = s0.cross(s1).normalize();
 
       for & i in & [i0, i1, i2] {
-        let nI = self.vertices[i].normal();
-        self.vertices[i].set_normal(nI + normal);
+        let norm_i = self.vertices[i].normal();
+        self.vertices[i].set_normal(norm_i + normal);
       }
     }
 

@@ -2,8 +2,6 @@ use glium::backend::Facade;
 use glium::index::{PrimitiveType, IndexBuffer};
 use glium::vertex::VertexBuffer;
 
-use cgmath::*;
-
 use defs::*;
 use vertex::{Vertex, LineVertex};
 use vertex_index_mesh::VertexIndexMesh;

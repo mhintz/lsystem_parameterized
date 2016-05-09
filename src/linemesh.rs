@@ -9,8 +9,6 @@ use vertex::LineVertex;
 use bufferset::LineBuffer;
 
 pub struct LineMesh {
-  vertices: Option<VertexBuffer<LineVertex>>,
-  indices: Option<IndexBuffer<u32>>,
   pub points: Vec<Pt>,
   pub colors: Vec<Vec4>,
   pub color: Vec4,
@@ -19,8 +17,6 @@ pub struct LineMesh {
 impl LineMesh {
   pub fn new() -> LineMesh {
     LineMesh {
-      vertices: None,
-      indices: None,
       points: Vec::new(),
       colors: Vec::new(),
       color: Vec4::zero(),
