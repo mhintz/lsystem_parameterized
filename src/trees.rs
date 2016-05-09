@@ -2,16 +2,12 @@ use std::{f32, f64};
 use cgmath::num_traits::Float;
 
 use lsystem::*;
-use rand_util::{random_max};
+use rand_util::{random_max, random_lohi};
 
 const PHI: f32 = 1.61803398875;
 const PHI_RECIP: f32 = 1.0 / PHI;
 const PHI_COMPLEMENT: f32 = 1.0 - PHI_RECIP;
 const PI: f32 = f32::consts::PI;
-
-fn deg_to_rad(deg: f32) -> f32 {
-  deg * PI / 180.0
-}
 
 #[derive(Copy, Clone)]
 pub struct KochCurve;
@@ -203,12 +199,14 @@ impl LSystem for RoundTree {
 
   fn produce(&self, module: Module) -> Vec<Module> {
     let max_trunk_rot = PI / 200.0;
-    let max_branch_rot = PI / 4.0;
-    let branch_angle_max = PI / 3.0;
+    let min_branch_rot = -PI / 8.0;
+    let max_branch_rot = PI / 8.0;
+    let branch_angle_min = PI * 1.0 / 4.0;
+    let branch_angle_max = PI * 1.0 / 3.0;
     match module {
       Module::Trunk { w, l, life } => {
         vec![
-          trunk(w, l * 1.1, life),
+          trunk(w, l * 1.2, life),
           euler(random_max(max_trunk_rot), random_max(max_trunk_rot), random_max(max_trunk_rot)),
           trunk(w, self.trunk_base_length, 0),
         ]
@@ -224,31 +222,40 @@ impl LSystem for RoundTree {
       },
       Module::TrunkApex { .. } => {
         vec![
+          yaw((PHI * 30.0_f32).to_radians()),
+          // yaw((90.0_f32).to_radians()),
           push(),
-          roll(-random_max(branch_angle_max)),
+          roll(-random_lohi(branch_angle_min, branch_angle_max)),
           branch(self.base_width, self.branch_base_length, 4),
           branch_apex(4),
           pop(),
           push(),
-          roll(random_max(branch_angle_max)),
+          roll(random_lohi(branch_angle_min, branch_angle_max)),
           branch(self.base_width, self.branch_base_length, 4),
           branch_apex(4),
           pop(),
+          trunk(self.base_width, self.trunk_base_length, 0),
+          trunk_apex(0)
         ]
       },
       Module::BranchApex { life } => {
         if life > 0 {
           vec![
+            yaw((PHI * 360.0_f32).to_radians()),
+            // yaw((90.0_f32).to_radians()),
             push(),
-            euler(random_max(max_branch_rot), PI * PHI_RECIP, random_max(max_branch_rot)),
+            roll(random_lohi(25.0_f32, 30.0_f32).to_radians()),
+            euler(random_lohi(min_branch_rot, max_branch_rot), 0.0, random_lohi(min_branch_rot, max_branch_rot)),
             branch(self.base_width, self.branch_base_length, 3),
             branch_apex(2),
             pop(),
             push(),
-            euler(random_max(max_branch_rot), PI * PHI_RECIP, random_max(max_branch_rot)),
+            roll(-random_lohi(25.0_f32, 30.0_f32).to_radians()),
+            euler(random_lohi(min_branch_rot, max_branch_rot), 0.0, random_lohi(min_branch_rot, max_branch_rot)),
             branch(self.base_width, self.branch_base_length, 3),
             branch_apex(2),
             pop(),
+            branch(self.base_width, self.branch_base_length, 3),
             branch_apex(life - 1)
           ]
         } else {

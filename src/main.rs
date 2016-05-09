@@ -209,7 +209,7 @@ fn main() {
 
   let tree_system = RoundTree {
     base_width: 0.15,
-    trunk_base_length: 0.5,
+    trunk_base_length: 0.1,
     branch_base_length: 1.0,
   };
   let tree_produced = run_system(tree_system, 5);
