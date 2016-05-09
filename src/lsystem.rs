@@ -7,6 +7,7 @@ pub enum DrawCommand {
   Roll { r: f32 }, // Roll by r radians (rotate heading around the z axis)
   Pitch { r: f32 }, // Pitch by r radians (rotate heading around the x axis)
   Yaw { r: f32 }, // Yaw by r radians (rotate heading around the y axis)
+  Euler { x: f32, y: f32, z: f32 }, // Rotation represented as Euler angles x, y, z
   Push, // Push current transformation onto the local pushdown stack
   Pop, // Pop the current transformation from the pushdown stack and return to the most recently pushed one
   None, // Do Nothing, don't draw
@@ -17,6 +18,7 @@ pub fn forward_cmd(d: f32) -> DrawCommand { DrawCommand::Forward { d: d } }
 pub fn roll_cmd(r: f32) -> DrawCommand { DrawCommand::Roll { r: r } }
 pub fn pitch_cmd(r: f32) -> DrawCommand { DrawCommand::Pitch { r: r } }
 pub fn yaw_cmd(r: f32) -> DrawCommand { DrawCommand::Yaw { r: r } }
+pub fn euler_cmd(x: f32, y: f32, z: f32) -> DrawCommand { DrawCommand::Euler { x: x, y: y, z: z } }
 pub fn push_cmd() -> DrawCommand { DrawCommand::Push }
 pub fn pop_cmd() -> DrawCommand { DrawCommand::Pop }
 pub fn none_cmd() -> DrawCommand { DrawCommand::None }
@@ -29,10 +31,11 @@ pub enum Module {
   Roll { r: f32 },
   Pitch { r: f32 },
   Yaw { r: f32 },
+  Euler { x: f32, y: f32, z: f32 },
   Push,
   Pop,
-  TrunkApex, // Generation point for plant organs - on the trunk
-  BranchApex, // Generation point for plant organs - on a branch
+  TrunkApex { life: u8 }, // Generation point for plant organs - on the trunk
+  BranchApex { life: u8 }, // Generation point for plant organs - on a branch
   Trunk { w: f32, l: f32, life: u8 }, // Trunk of the tree
   Branch { w: f32, l: f32, life: u8 }, // Creates a straight branch with width w and length l
   Custom(u8, DrawCommand), // Can be used for any custom element
@@ -44,10 +47,11 @@ impl Module {
       Module::Roll { r } => roll_cmd(r),
       Module::Pitch { r } => pitch_cmd(r),
       Module::Yaw { r } => yaw_cmd(r),
+      Module::Euler { x, y, z } => euler_cmd(x, y, z),
       Module::Push => push_cmd(),
       Module::Pop => pop_cmd(),
-      Module::TrunkApex => none_cmd(),
-      Module::BranchApex => none_cmd(),
+      Module::TrunkApex { .. } => none_cmd(),
+      Module::BranchApex { .. } => none_cmd(),
       Module::Trunk { w, l, .. } => segment_cmd(w, l),
       Module::Branch { w, l, .. } => segment_cmd(w, l),
       Module::Custom(_, cmd) => cmd,
@@ -58,10 +62,11 @@ impl Module {
 pub fn roll(r: f32) -> Module { Module::Roll { r: r } }
 pub fn pitch(r: f32) -> Module { Module::Pitch { r: r } }
 pub fn yaw(r: f32) -> Module { Module::Yaw { r: r } }
+pub fn euler(x: f32, y: f32, z: f32) -> Module { Module::Euler { x: x, y: y, z: z } }
 pub fn push() -> Module { Module::Push }
 pub fn pop() -> Module { Module::Pop }
-pub fn trunk_apex() -> Module { Module::TrunkApex }
-pub fn branch_apex() -> Module { Module::BranchApex }
+pub fn trunk_apex(life: u8) -> Module { Module::TrunkApex { life: life } }
+pub fn branch_apex(life: u8) -> Module { Module::BranchApex { life: life } }
 pub fn trunk(w: f32, l: f32, life: u8) -> Module { Module::Trunk { w: w, l: l, life: life } }
 pub fn branch(w: f32, l: f32, life: u8) -> Module { Module::Branch { w: w, l: l, life: life } }
 pub fn custom(num: u8, cmd: DrawCommand) -> Module { Module::Custom(num, cmd) }
@@ -123,4 +128,3 @@ pub fn run_system<T: LSystem + Send + Copy + 'static>(lsystem: T, iterations: u3
   // word.
   word
 }
-

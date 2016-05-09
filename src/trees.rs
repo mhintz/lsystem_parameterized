@@ -1,8 +1,17 @@
+use std::{f32, f64};
+use num_traits::Float;
+
+use lsystem::*;
+use rand_util::{random_max};
+
 const PHI: f32 = 1.61803398875;
 const PHI_RECIP: f32 = 1.0 / PHI;
 const PHI_COMPLEMENT: f32 = 1.0 - PHI_RECIP;
+const PI: f32 = f32::consts::PI;
 
-use lsystem::*;
+fn deg_to_rad(deg: f32) -> f32 {
+  deg * PI / 180.0
+}
 
 #[derive(Copy, Clone)]
 pub struct KochCurve;
@@ -68,14 +77,14 @@ impl LSystem for BasicTree {
   fn axiom(& self) -> Vec<Module> {
     vec![
       branch(1.0, 2.0, 1),
-      trunk_apex(),
+      trunk_apex(0),
     ]
   }
 
   fn produce(& self, module: Module) -> Vec<Module> {
     match module {
       Module::Branch { w: width, l: length, life } => vec![branch(width, length * 1.15, life)],
-      Module::TrunkApex => { // Trunk apex
+      Module::TrunkApex { .. } => { // Trunk apex
         vec![
           // Left branch
           push(),
@@ -90,10 +99,10 @@ impl LSystem for BasicTree {
           pop(),
           branch(1.0, 1.0, 1),
           yaw(60.0_f32.to_radians()),
-          trunk_apex(),
+          trunk_apex(0),
         ]
       },
-      Module::BranchApex => vec![module],
+      Module::BranchApex { .. } => vec![module],
       Module::Custom(2, _) => { // Branch apex left
         vec![
           roll(25.0_f32.to_radians()),
@@ -125,7 +134,7 @@ impl LSystem for BranchingTree {
   fn axiom(& self) -> Vec<Module> {
     vec![
       trunk(self.base_width, 2.0 * self.base_length, 5),
-      trunk_apex(),
+      trunk_apex(0),
     ]
   }
 
@@ -139,7 +148,7 @@ impl LSystem for BranchingTree {
               };
               vec![branch(new_width, new_length, new_life)]
           },
-          Module::TrunkApex => vec![
+          Module::TrunkApex { .. } => vec![
             push(),
             roll(-30.0_f32.to_radians()),
             trunk(self.base_width, self.base_length, 3),
@@ -152,9 +161,9 @@ impl LSystem for BranchingTree {
             pop(),
             yaw((PHI_RECIP * 360.0_f32).to_radians()),
             branch(self.base_width, self.base_length, 3),
-            trunk_apex(),
+            trunk_apex(0),
           ],
-          Module::BranchApex => vec![module],
+          Module::BranchApex { .. } => vec![module],
           Module::Custom(1, _) => vec![
             push(),
             roll(-30.0_f32.to_radians()),
@@ -170,5 +179,83 @@ impl LSystem for BranchingTree {
           ],
           _ => vec![module],
       }
+  }
+}
+
+#[derive(Copy, Clone)]
+pub struct RoundTree {
+  pub base_width: f32,
+  pub trunk_base_length: f32,
+  pub branch_base_length: f32,
+}
+
+impl LSystem for RoundTree {
+  type Module = Module;
+
+  fn axiom(&self) -> Vec<Module> {
+    let max_rot = PI / 32.0;
+    vec![
+      euler(random_max(max_rot), random_max(max_rot), random_max(max_rot)),
+      trunk(self.base_width, self.trunk_base_length, 0),
+      trunk_apex(0),
+    ]
+  }
+
+  fn produce(&self, module: Module) -> Vec<Module> {
+    let max_trunk_rot = PI / 200.0;
+    let max_branch_rot = PI / 4.0;
+    let branch_angle_max = PI / 3.0;
+    match module {
+      Module::Trunk { w, l, life } => {
+        vec![
+          trunk(w, l * 1.1, life),
+          euler(random_max(max_trunk_rot), random_max(max_trunk_rot), random_max(max_trunk_rot)),
+          trunk(w, self.trunk_base_length, 0),
+        ]
+      },
+      Module::Branch { w, l, life } => {
+        vec![
+          if life > 0 {
+            branch(w, l * 1.1, life - 1)
+          } else {
+            module
+          }
+        ]
+      },
+      Module::TrunkApex { .. } => {
+        vec![
+          push(),
+          roll(-random_max(branch_angle_max)),
+          branch(self.base_width, self.branch_base_length, 4),
+          branch_apex(4),
+          pop(),
+          push(),
+          roll(random_max(branch_angle_max)),
+          branch(self.base_width, self.branch_base_length, 4),
+          branch_apex(4),
+          pop(),
+        ]
+      },
+      Module::BranchApex { life } => {
+        if life > 0 {
+          vec![
+            push(),
+            euler(random_max(max_branch_rot), PI * PHI_RECIP, random_max(max_branch_rot)),
+            branch(self.base_width, self.branch_base_length, 3),
+            branch_apex(2),
+            pop(),
+            push(),
+            euler(random_max(max_branch_rot), PI * PHI_RECIP, random_max(max_branch_rot)),
+            branch(self.base_width, self.branch_base_length, 3),
+            branch_apex(2),
+            pop(),
+            branch_apex(life - 1)
+          ]
+        } else {
+          vec![]
+        }
+      },
+      _ => vec![module],
+    }
   }
 }

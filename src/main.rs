@@ -13,6 +13,7 @@ mod vertex;
 mod linemesh;
 mod vertex_index_mesh;
 mod trees;
+mod rand_util;
 
 use std::fs::File;
 use std::io::Read;
@@ -24,7 +25,7 @@ use glium::index::PrimitiveType;
 
 use cgmath::*;
 
-use lsystem::*;
+use lsystem::{Module, DrawCommand, run_system};
 use trees::*;
 use bufferset::*;
 use defs::*;
@@ -68,6 +69,9 @@ pub fn ls_to_lines(word: &[Module]) -> LineMesh {
       },
       DrawCommand::Yaw { r } => {
         mat_stack.rotate(Matrix3::from_angle_y(Rad::new(r)));
+      },
+      DrawCommand::Euler { x, y, z } => {
+        mat_stack.rotate(Matrix3::from_euler(Rad::new(x), Rad::new(y), Rad::new(z)));
       },
       DrawCommand::Push => {
         mat_stack.push();
@@ -158,6 +162,9 @@ fn ls_to_cylinders(word: & [Module]) -> VertexIndexMesh {
       DrawCommand::Roll { r } => {
         mat_stack.rotate(Matrix3::from_angle_z(Rad::new(r)));
       },
+      DrawCommand::Euler { x, y, z } => {
+        mat_stack.rotate(Matrix3::from_euler(Rad::new(x), Rad::new(y), Rad::new(z)));
+      },
       DrawCommand::Push => {
         mat_stack.push();
       },
@@ -192,12 +199,21 @@ fn main() {
   // let tree_line_struct = ls_to_lines(& tree_produced);
   // let tree_mesh_struct = ls_to_cylinders(& tree_produced);
 
-  let tree_system: BranchingTree = BranchingTree {
+  // let tree_system = BranchingTree {
+  //   base_width: 0.15,
+  //   base_length: 1.0,
+  // };
+  // let tree_produced = run_system(tree_system, 40);
+  // let tree_line_struct = ls_to_lines(& tree_produced);
+  // let mut tree_mesh_struct = ls_to_cylinders(& tree_produced);
+  // tree_mesh_struct.recompute_normals();
+
+  let tree_system = RoundTree {
     base_width: 0.15,
-    base_length: 1.0,
+    trunk_base_length: 0.5,
+    branch_base_length: 1.0,
   };
-  let tree_produced = run_system(tree_system, 40);
-  let tree_line_struct = ls_to_lines(& tree_produced);
+  let tree_produced = run_system(tree_system, 5);
   let mut tree_mesh_struct = ls_to_cylinders(& tree_produced);
   tree_mesh_struct.recompute_normals();
 
