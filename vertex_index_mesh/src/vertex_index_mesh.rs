@@ -1,15 +1,14 @@
 use glium::backend::Facade;
 use glium::index::{PrimitiveType};
 
-use cgmath::prelude::*;
+use cgmath::*;
 
-use defs::*;
 use vertex::Vertex;
 use bufferset::BufferSet;
 
 pub struct VertexIndexMesh {
   pub vertices: Vec<Vertex>,
-  pub indices: Vec<Idx>,
+  pub indices: Vec<u32>,
   pub primtype: PrimitiveType,
 }
 
@@ -22,7 +21,7 @@ impl VertexIndexMesh {
     }
   }
 
-  pub fn add_point(&mut self, point: Pt) {
+  pub fn add_point(&mut self, point: Point3<f32>) {
     self.add_vertex(Vertex::from_pos(point));
   }
 

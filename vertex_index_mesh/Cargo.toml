@@ -1,0 +1,8 @@
+[package]
+name = "vertex_index_mesh"
+version = "0.1.0"
+authors = ["Mark Hintz <markinportland7@gmail.com>"]
+
+[dependencies]
+cgmath = { path = "../../cgmath-rs", branch = "master" }
+glium = "^0.13.5"

@@ -2,16 +2,16 @@ use glium::backend::Facade;
 use glium::index::{PrimitiveType, IndexBuffer};
 use glium::vertex::VertexBuffer;
 
-use cgmath::*;
+use cgmath::prelude::*;
+use cgmath::{Point3, Vector4};
 
-use defs::*;
-use vertex::LineVertex;
-use bufferset::LineBuffer;
+use line_vertex::LineVertex;
+use line_buffer::LineBuffer;
 
 pub struct LineMesh {
-  pub points: Vec<Pt>,
-  pub colors: Vec<Vec4>,
-  pub color: Vec4,
+  pub points: Vec<Point3<f32>>,
+  pub colors: Vec<Vector4<f32>>,
+  pub color: Vector4<f32>,
 }
 
 impl LineMesh {
@@ -19,20 +19,20 @@ impl LineMesh {
     LineMesh {
       points: Vec::new(),
       colors: Vec::new(),
-      color: Vec4::zero(),
+      color: Vector4::zero(),
     }
   }
 
-  pub fn set_color(&mut self, color: Vec4) {
+  pub fn set_color(&mut self, color: Vector4<f32>) {
     self.color = color;
   }
 
-  pub fn add_point(&mut self, pt: Pt) {
+  pub fn add_point(&mut self, pt: Point3<f32>) {
     self.points.push(pt);
     self.colors.push(self.color);
   }
 
-  pub fn append_point(&mut self, pt: Pt) {
+  pub fn append_point(&mut self, pt: Point3<f32>) {
     if let Some(& last_point) = self.points.last() {
       self.add_point(last_point);
     } else {
@@ -42,12 +42,12 @@ impl LineMesh {
     self.add_point(pt);
   }
 
-  pub fn append_segment(&mut self, pt_a: Pt, pt_b: Pt) {
+  pub fn append_segment(&mut self, pt_a: Point3<f32>, pt_b: Point3<f32>) {
     self.add_point(pt_a);
     self.add_point(pt_b);
   }
 
-  pub fn move_to(&mut self, pt: Pt) {
+  pub fn move_to(&mut self, pt: Point3<f32>) {
     self.add_point(pt);
     self.add_point(pt);
   }

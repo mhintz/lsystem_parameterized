@@ -4,9 +4,8 @@ use cgmath::*;
 use defs::*;
 use matrixstack;
 use lsystem::{Module, DrawCommand};
-use linemesh::LineMesh;
-use vertex::Vertex;
-use vertex_index_mesh::VertexIndexMesh;
+use line_mesh::LineMesh;
+use vertex_index_mesh::{VertexIndexMesh, Vertex};
 
 pub fn ls_to_lines(word: &[Module]) -> LineMesh {
   let mut line = LineMesh::new();

@@ -6,8 +6,10 @@ version = "0.1.0"
 [dependencies]
 arcball-cgmath = { path = "../arcball-cgmath", branch = "master" }
 cgmath = { path = "../cgmath-rs", branch = "master" }
-glium = "0.13.5"
+glium = "^0.13.5"
 matrixstack = { path = "../matrixstack", branch = "master" }
 num = "*"
 rand = "0.3"
 num-traits = "0.1"
+vertex_index_mesh = { path = "vertex_index_mesh" }
+line_mesh = { path = "line_mesh" }

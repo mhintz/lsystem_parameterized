@@ -1,16 +1,15 @@
 #[macro_use]
 extern crate glium;
 extern crate cgmath;
-extern crate arcball_cgmath;
-extern crate matrixstack;
 extern crate rand;
 
+extern crate arcball_cgmath;
+extern crate matrixstack;
+extern crate vertex_index_mesh;
+extern crate line_mesh;
+
 mod lsystem;
-mod bufferset;
 mod defs;
-mod vertex;
-mod linemesh;
-mod vertex_index_mesh;
 mod trees;
 mod rand_util;
 mod draw_helpers;
@@ -27,7 +26,7 @@ use cgmath::*;
 use lsystem::{run_system};
 use trees::*;
 use defs::*;
-use draw_helpers::{/*ls_to_lines,*/ ls_to_cylinders};
+use draw_helpers::{ls_to_lines, ls_to_cylinders};
 
 const WINDOW_WIDTH: u32 = 800;
 const WINDOW_HEIGHT: u32 = 800;
@@ -49,7 +48,7 @@ fn main() {
     branch_base_length: 1.0,
   };
   let tree_produced = run_system(tree_system, 5);
-  // let tree_line_struct = ls_to_lines(& tree_produced);
+  let tree_line_struct = ls_to_lines(& tree_produced);
   let mut tree_mesh_struct = ls_to_cylinders(& tree_produced);
   tree_mesh_struct.recompute_normals();
 
