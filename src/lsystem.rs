@@ -1,16 +1,26 @@
 use std::thread;
 
+/// An enum for drawing commands using a turtle graphics-style approach
 #[derive(Copy, Clone, Debug)]
 pub enum DrawCommand {
+  /// Make a branch with width w and length l
   Segment { w: f32, l: f32 },
-  Forward { d: f32 }, // Move forward distance d, without making a branch
-  Roll { r: f32 }, // Roll by r radians (rotate heading around the z axis)
-  Pitch { r: f32 }, // Pitch by r radians (rotate heading around the x axis)
-  Yaw { r: f32 }, // Yaw by r radians (rotate heading around the y axis)
-  Euler { x: f32, y: f32, z: f32 }, // Rotation represented as Euler angles x, y, z
-  Push, // Push current transformation onto the local pushdown stack
-  Pop, // Pop the current transformation from the pushdown stack and return to the most recently pushed one
-  None, // Do Nothing, don't draw
+  /// Move forward distance d, without making a branch
+  Forward { d: f32 },
+  /// Roll by r radians (rotate heading around the z axis)
+  Roll { r: f32 },
+  /// Pitch by r radians (rotate heading around the x axis)
+  Pitch { r: f32 },
+  /// Yaw by r radians (rotate heading around the y axis)
+  Yaw { r: f32 },
+  /// Rotation represented as Euler angles x, y, z
+  Euler { x: f32, y: f32, z: f32 },
+  /// Push current transformation onto the local pushdown stack
+  Push,
+  /// Pop the current transformation from the pushdown stack and return to the most recently pushed one
+  Pop,
+  /// Do Nothing, don't draw
+  None,
 }
 
 pub fn segment_cmd(w: f32, l: f32) -> DrawCommand { DrawCommand::Segment { w: w, l: l } }
@@ -23,25 +33,37 @@ pub fn push_cmd() -> DrawCommand { DrawCommand::Push }
 pub fn pop_cmd() -> DrawCommand { DrawCommand::Pop }
 pub fn none_cmd() -> DrawCommand { DrawCommand::None }
 
-// This is a "module", one part of an l-system "word",
-// where a word is a full description of the l-system at a certain
-// level of iteration.
+/// This is a "module", one part of an l-system "word",
+/// where a word is a full description of the l-system at a certain
+/// level of iteration.
 #[derive(Copy, Clone, Debug)]
 pub enum Module {
+  /// Rotate around the z axis by r radians
   Roll { r: f32 },
+  /// Rotate around the x axis by r radians
   Pitch { r: f32 },
+  /// Rotate around the y axis by r radians
   Yaw { r: f32 },
+  /// An orientation change in Euler angles
   Euler { x: f32, y: f32, z: f32 },
+  /// Push the current transform matrix onto a matrix stack
   Push,
+  /// Pop the transform matrix off of the matrix stack, returns to the previously pushed matrix, or identity
   Pop,
-  TrunkApex { life: u8 }, // Generation point for plant organs - on the trunk
-  BranchApex { life: u8 }, // Generation point for plant organs - on a branch
-  Trunk { w: f32, l: f32, life: u8 }, // Trunk of the tree
-  Branch { w: f32, l: f32, life: u8 }, // Creates a straight branch with width w and length l
-  Custom(u8, DrawCommand), // Can be used for any custom element
+  /// Generation point for plant organs - on the trunk
+  TrunkApex { life: u8 },
+  /// Generation point for plant organs - on a branch
+  BranchApex { life: u8 },
+  /// Trunk of the tree
+  Trunk { w: f32, l: f32, life: u8 },
+  /// Creates a straight branch with width w and length l
+  Branch { w: f32, l: f32, life: u8 },
+  /// Can be used for any custom element
+  Custom(u8, DrawCommand),
 }
 
 impl Module {
+  /// Transform an LSystem module into its corresponding turtle drawing command
   pub fn to_draw_command(& self) -> DrawCommand {
     match * self {
       Module::Roll { r } => roll_cmd(r),
@@ -72,6 +94,7 @@ pub fn branch(w: f32, l: f32, life: u8) -> Module { Module::Branch { w: w, l: l,
 pub fn custom(num: u8, cmd: DrawCommand) -> Module { Module::Custom(num, cmd) }
 pub fn custom_none(num: u8) -> Module { Module::Custom(num, DrawCommand::None) }
 
+/// A trait which can be implemented by arbitrary structs so that they can be used as an lsystem
 pub trait LSystem where Self: Send + Copy + 'static {
   /// The type for the modules of the l-system. These modules are the constituent
   /// parts of the system, which is composed of strings of this type, plus rules for
@@ -83,13 +106,13 @@ pub trait LSystem where Self: Send + Copy + 'static {
   fn produce(& self, module: Self::Module) -> Vec<Self::Module>;
 }
 
-// Split up a vector into discrete chunks. This function could probably be optimized
+/// Split up a vector into discrete chunks. This function could probably be optimized
 fn split_vec<T: Clone>(thevec: Vec<T>, numsplits: usize) -> Vec<Vec<T>> {
   thevec.chunks(numsplits).map(|chunk| { chunk.to_vec() }).collect()
 }
 
-// Iterate over an lsystem word, producing a new vector of modules for each module in the word,
-// then collect these modules together
+/// Iterate over an lsystem word, producing a new vector of modules for each module in the word,
+/// then collect these modules together
 pub fn iterate_system<T: LSystem>(lsystem: T, word: Vec<T::Module>) -> Vec<T::Module> {
   word.iter().flat_map(|letter| lsystem.produce(* letter)).collect()
 }
