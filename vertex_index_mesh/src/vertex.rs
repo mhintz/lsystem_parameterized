@@ -30,6 +30,24 @@ impl Vertex {
     }
   }
 
+  pub fn pos_and_color(pos: & [f32; 3], color: & [f32; 4]) -> Vertex {
+    Vertex {
+      a_color: *color,
+      a_pos: *pos,
+      a_norm: [0.0; 3],
+      a_tex: [0.0; 2],
+    }
+  }
+
+  pub fn pos_and_tex(pos: & [f32; 3], tex: & [f32; 2]) -> Vertex {
+    Vertex {
+      a_color: [0.0; 4],
+      a_pos: *pos,
+      a_norm: [0.0; 3],
+      a_tex: *tex,
+    }
+  }
+
   pub fn from(pos: Point3<f32>, norm: Vector3<f32>, color: Vector4<f32>, tex: Vector2<f32>) -> Vertex {
     Vertex {
       a_color: color.into(),
@@ -45,6 +63,24 @@ impl Vertex {
       a_pos: pos.into(),
       a_norm: [0.0; 3],
       a_tex: [0.0; 2],
+    }
+  }
+
+  pub fn from_pos_and_color(pos: Point3<f32>, color: Vector4<f32>) -> Vertex {
+    Vertex {
+      a_color: color.into(),
+      a_pos: pos.into(),
+      a_norm: [0.0; 3],
+      a_tex: [0.0; 2],
+    }
+  }
+
+  pub fn from_pos_and_tex(pos: Point3<f32>, tex: Vector2<f32>) -> Vertex {
+    Vertex {
+      a_color: [0.0; 4],
+      a_pos: pos.into(),
+      a_norm: [0.0; 3],
+      a_tex: tex.into(),
     }
   }
 
