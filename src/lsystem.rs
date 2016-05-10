@@ -72,7 +72,7 @@ pub fn branch(w: f32, l: f32, life: u8) -> Module { Module::Branch { w: w, l: l,
 pub fn custom(num: u8, cmd: DrawCommand) -> Module { Module::Custom(num, cmd) }
 pub fn custom_none(num: u8) -> Module { Module::Custom(num, DrawCommand::None) }
 
-pub trait LSystem {
+pub trait LSystem where Self: Send + Copy + 'static {
   /// The type for the modules of the l-system. These modules are the constituent
   /// parts of the system, which is composed of strings of this type, plus rules for
   /// generation of new strings from the existing modules
