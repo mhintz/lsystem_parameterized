@@ -50,7 +50,15 @@ fn main() {
   let tree_produced = run_system(tree_system, 5);
   let tree_line_struct = ls_to_lines(& tree_produced);
   let mut tree_mesh_struct = ls_to_cylinders(& tree_produced);
-  tree_mesh_struct.recompute_normals();
+  tree_mesh_struct = vertex_index_mesh::recompute_normals(tree_mesh_struct);
+  tree_mesh_struct = vertex_index_mesh::assign_colors(tree_mesh_struct, |_, _| {
+    let redval = rand_util::random_lohi(25.0_f32, 70.0_f32);
+    let ratio_grn = rand_util::random_lohi(1.45_f32, 1.65_f32);
+    let ratio_blu = rand_util::random_lohi(3.0_f32, 3.4_f32);
+    let (r, g, b) = (redval, redval / ratio_grn, redval / ratio_blu);
+    let v = Vec4::new(r / 255.0, g / 255.0, b / 255.0, 1.0);
+    [v, v, v]
+  });
 
   // OpenGL setup
   let window = glutin::WindowBuilder::new()
