@@ -3,6 +3,7 @@ use std::thread;
 /// An enum for drawing commands using a turtle graphics-style approach
 #[derive(Copy, Clone, Debug)]
 pub enum DrawCommand {
+  Foliage { r: f32, l: f32 },
   /// Make a branch with width w and length l
   Segment { w: f32, l: f32 },
   /// Move forward distance d, without making a branch
@@ -23,6 +24,7 @@ pub enum DrawCommand {
   None,
 }
 
+pub fn foliage_cmd(r: f32, l: f32) -> DrawCommand { DrawCommand::Foliage { r: r, l: l } }
 pub fn segment_cmd(w: f32, l: f32) -> DrawCommand { DrawCommand::Segment { w: w, l: l } }
 pub fn forward_cmd(d: f32) -> DrawCommand { DrawCommand::Forward { d: d } }
 pub fn roll_cmd(r: f32) -> DrawCommand { DrawCommand::Roll { r: r } }
@@ -53,7 +55,7 @@ pub enum Module {
   /// Generation point for plant organs - on the trunk
   TrunkApex { life: u8 },
   /// Generation point for plant organs - on a branch
-  BranchApex { life: u8 },
+  BranchApex { r: f32, l: f32, life: u8 },
   /// Trunk of the tree
   Trunk { w: f32, l: f32, life: u8 },
   /// Creates a straight branch with width w and length l
@@ -73,7 +75,7 @@ impl Module {
       Module::Push => push_cmd(),
       Module::Pop => pop_cmd(),
       Module::TrunkApex { .. } => none_cmd(),
-      Module::BranchApex { .. } => none_cmd(),
+      Module::BranchApex { r, l, .. } => foliage_cmd(r, l),
       Module::Trunk { w, l, .. } => segment_cmd(w, l),
       Module::Branch { w, l, .. } => segment_cmd(w, l),
       Module::Custom(_, cmd) => cmd,
@@ -88,7 +90,7 @@ pub fn euler(x: f32, y: f32, z: f32) -> Module { Module::Euler { x: x, y: y, z: 
 pub fn push() -> Module { Module::Push }
 pub fn pop() -> Module { Module::Pop }
 pub fn trunk_apex(life: u8) -> Module { Module::TrunkApex { life: life } }
-pub fn branch_apex(life: u8) -> Module { Module::BranchApex { life: life } }
+pub fn branch_apex(r: f32, l: f32, life: u8) -> Module { Module::BranchApex { r: r, l: l, life: life } }
 pub fn trunk(w: f32, l: f32, life: u8) -> Module { Module::Trunk { w: w, l: l, life: life } }
 pub fn branch(w: f32, l: f32, life: u8) -> Module { Module::Branch { w: w, l: l, life: life } }
 pub fn custom(num: u8, cmd: DrawCommand) -> Module { Module::Custom(num, cmd) }

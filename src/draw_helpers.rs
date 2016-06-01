@@ -1,11 +1,15 @@
 use glium::index::PrimitiveType;
 use cgmath::*;
+use rand;
 
 use defs::*;
 use matrixstack;
 use lsystem::{Module, DrawCommand};
 use line_mesh::LineMesh;
-use vertex_index_mesh::{VertexIndexMesh, Vertex};
+use vertex_index_mesh::{self, VertexIndexMesh, Vertex};
+use rand_util;
+use convex_hull;
+use half_edge_mesh::{HalfEdgeMesh, ToPtrVec};
 
 pub fn ls_to_lines(word: &[Module]) -> LineMesh {
   let mut line = LineMesh::new();
@@ -19,6 +23,7 @@ pub fn ls_to_lines(word: &[Module]) -> LineMesh {
 
   for item in word {
     match item.to_draw_command() {
+      DrawCommand::Foliage { .. } => (), // Don't draw foliage in the line version
       DrawCommand::Segment { w: _, l: length } => {
         mat_stack.transform(Matrix4::from_translation(base_heading * length));
         line.append_point(mat_stack.origin());
@@ -97,6 +102,49 @@ fn transform_points(points: & [Pt], transform: Mat4) -> Vec<Pt> {
   points.iter().map(|pt| Pt::from_vec((transform * pt.to_homogeneous()).truncate())).collect()
 }
 
+pub fn generate_branch(start: Pt, end: Pt, facets: u32, radius: f32) -> VertexIndexMesh {
+  let mut branch_body = cylinder(start, end, facets, radius);
+
+  branch_body = vertex_index_mesh::assign_colors(branch_body, |_, _| {
+    let redval = rand_util::random_lohi(25.0_f32, 70.0_f32);
+    let ratio_grn = rand_util::random_lohi(1.45_f32, 1.65_f32);
+    let ratio_blu = rand_util::random_lohi(3.0_f32, 3.4_f32);
+    let (r, g, b) = (redval, redval / ratio_grn, redval / ratio_blu);
+    let v = Vec4::new(r / 255.0, g / 255.0, b / 255.0, 1.0);
+    [v, v, v]
+  });
+
+  branch_body
+}
+
+fn to_vertex_index_mesh(half_edge: HalfEdgeMesh) -> VertexIndexMesh {
+  let mut mesh = VertexIndexMesh::new(PrimitiveType::TrianglesList);
+
+  for face in half_edge.faces.values() {
+    let face_borrow = face.borrow();
+    for vert in face_borrow.adjacent_verts().to_ptr_vec() {
+      mesh.add_vertex(Vertex::pos_only(vert.borrow().pos.as_ref()));
+    }
+  }
+
+  mesh
+}
+
+pub fn generate_foliage(start: Pt, end: Pt, radius: f32) -> VertexIndexMesh {
+  let midpoint = (end.to_vec() + start.to_vec()) / 2.0_f32;
+  let points = rand_util::rand_points_in_sphere(&mut rand::thread_rng(), 200, radius);
+  let translation = Matrix4::from_translation(start.to_vec());
+  let transformed_points = transform_points(& points, translation);
+  let hull = convex_hull::get_convex_hull(transformed_points);
+  let mut hull_mesh = to_vertex_index_mesh(hull);
+  hull_mesh = vertex_index_mesh::assign_colors(hull_mesh, |_, _| {
+    let green = Vec4::new(62.0 / 255.0, 117.0 / 255.0, 31.0 / 255.0, 1.0);
+    [green, green, green]
+  });
+
+  hull_mesh
+}
+
 pub fn ls_to_cylinders(word: & [Module]) -> VertexIndexMesh {
   let mut mesh = VertexIndexMesh::new(PrimitiveType::TrianglesList);
 
@@ -106,11 +154,17 @@ pub fn ls_to_cylinders(word: & [Module]) -> VertexIndexMesh {
 
   for item in word {
     match item.to_draw_command() {
+      DrawCommand::Foliage { l: length, r: radius } => {
+        let start = mat_stack.origin();
+        mat_stack.transform(Matrix4::from_translation(base_heading * length));
+        let end = mat_stack.origin();
+        mesh.extend_with(& generate_foliage(start, end, radius));
+      },
       DrawCommand::Segment { w: width, l: length } => {
         let start = mat_stack.origin();
         mat_stack.transform(Matrix4::from_translation(base_heading * length));
         let end = mat_stack.origin();
-        mesh.extend_with(& cylinder(start, end, 8, width / 2.0));
+        mesh.extend_with(& generate_branch(start, end, 8, width / 2.0));
       },
       DrawCommand::Forward { d: distance } => {
         mat_stack.transform(Matrix4::from_translation(base_heading * distance));
@@ -136,6 +190,8 @@ pub fn ls_to_cylinders(word: & [Module]) -> VertexIndexMesh {
       DrawCommand::None => (),
     }
   }
+
+  mesh = vertex_index_mesh::recompute_normals(mesh);
 
   return mesh;
 }

@@ -182,6 +182,8 @@ pub struct RoundTree {
   pub base_width: f32,
   pub trunk_base_length: f32,
   pub branch_base_length: f32,
+  pub base_foliage_radius: f32,
+  pub base_foliage_length: f32,
 }
 
 impl LSystem for RoundTree {
@@ -226,19 +228,19 @@ impl LSystem for RoundTree {
           push(),
           roll(-random_lohi(branch_angle_min, branch_angle_max)),
           branch(self.base_width, self.branch_base_length, 4),
-          branch_apex(4),
+          branch_apex(self.base_foliage_radius, self.base_foliage_length, 0),
           pop(),
           push(),
           roll(random_lohi(branch_angle_min, branch_angle_max)),
           branch(self.base_width, self.branch_base_length, 4),
-          branch_apex(4),
+          branch_apex(self.base_foliage_radius, self.base_foliage_length, 0),
           pop(),
           trunk(self.base_width, self.trunk_base_length, 0),
           trunk_apex(0)
         ]
       },
-      Module::BranchApex { life } => {
-        if life > 0 {
+      Module::BranchApex { r, l, life } => {
+        if life < 4 {
           vec![
             yaw((PHI * 360.0_f32).to_radians()),
             // yaw((90.0_f32).to_radians()),
@@ -246,16 +248,16 @@ impl LSystem for RoundTree {
             roll(random_lohi(25.0_f32, 30.0_f32).to_radians()),
             euler(random_lohi(min_branch_rot, max_branch_rot), 0.0, random_lohi(min_branch_rot, max_branch_rot)),
             branch(self.base_width, self.branch_base_length, 3),
-            branch_apex(2),
+            branch_apex(self.base_foliage_radius, self.base_foliage_length, 2),
             pop(),
             push(),
             roll(-random_lohi(25.0_f32, 30.0_f32).to_radians()),
             euler(random_lohi(min_branch_rot, max_branch_rot), 0.0, random_lohi(min_branch_rot, max_branch_rot)),
             branch(self.base_width, self.branch_base_length, 3),
-            branch_apex(2),
+            branch_apex(self.base_foliage_radius, self.base_foliage_length, 2),
             pop(),
             branch(self.base_width, self.branch_base_length, 3),
-            branch_apex(life - 1)
+            branch_apex(r * 1.1, l, life + 1)
           ]
         } else {
           vec![]
