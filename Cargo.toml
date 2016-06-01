@@ -14,4 +14,4 @@ num-traits = "0.1"
 vertex_index_mesh = { path = "vertex_index_mesh" }
 line_mesh = { path = "line_mesh" }
 convex_hull = { path = "../convex_hull", branch = "master" }
-half_edge_mesh = { path = "../half_edge_mesh", branch = "master" }
+half_edge_mesh = "^1.0.3"
