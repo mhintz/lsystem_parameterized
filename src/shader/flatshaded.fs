@@ -14,7 +14,7 @@ out vec4 o_color;
 void main() {
   vec3 normal = normalize(norm);
   vec3 toCam = normalize(cameraPos - worldSpacePos.xyz);
-  vec3 toLight = normalize(vec3(1.0, 10.0, 1.0) - worldSpacePos.xyz);
+  vec3 toLight = normalize(vec3(1.0, 20.0, 1.0) - worldSpacePos.xyz);
   float diffuseFactor = max(dot(normal, toLight), 0.0);
   vec3 diffColor = color.xyz * (0.1 + diffuseFactor);
   o_color = vec4(diffColor, color.a);
