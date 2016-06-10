@@ -22,6 +22,7 @@ use std::io::Read;
 use glium::glutin;
 use glium::glutin::{Event, ElementState};
 use glium::{DisplayBuild, Surface};
+use glium::backend::Facade;
 
 use cgmath::*;
 
@@ -29,6 +30,8 @@ use lsystem::{run_system};
 use trees::*;
 use defs::*;
 use draw_helpers::{ls_to_lines, ls_to_cylinders};
+use line_mesh::LineBuffer;
+use vertex_index_mesh::BufferSet;
 
 const WINDOW_WIDTH: u32 = 800;
 const WINDOW_HEIGHT: u32 = 800;
@@ -43,7 +46,7 @@ fn get_file_string(filename: & str) -> String {
   storage
 }
 
-fn main() {
+fn gen_new_tree<T: Facade>(gl: & T) -> (LineBuffer, BufferSet) {
   let tree_system = RoundTree {
     base_width: 0.15,
     trunk_base_length: 0.1,
@@ -52,9 +55,10 @@ fn main() {
     base_foliage_length: 1.0,
   };
   let tree_produced = run_system(tree_system, 5);
-  let tree_line_struct = ls_to_lines(& tree_produced);
-  let tree_mesh_struct = ls_to_cylinders(& tree_produced);
+  (ls_to_lines(& tree_produced).to_buffer(gl), ls_to_cylinders(& tree_produced).to_buffer(gl))
+}
 
+fn main() {
   // OpenGL setup
   let window = glutin::WindowBuilder::new()
     .with_depth_buffer(24)
@@ -62,8 +66,7 @@ fn main() {
     .with_title("L System".to_string())
     .build_glium().unwrap();
 
-  // let line_buffer = tree_line_struct.to_buffer(& window);
-  let mesh_buffer = tree_mesh_struct.to_buffer(& window);
+  let (_, mut mesh_buffer) = gen_new_tree(& window);
 
   // Shader Program
   // let basic_program = glium::Program::from_source(& window, & get_file_string("src/shader/base.vs"), & get_file_string("src/shader/base.fs"), None).unwrap();
@@ -117,6 +120,9 @@ fn main() {
       match event {
         Event::Closed => return,
         Event::KeyboardInput(ElementState::Pressed, _, Some(glutin::VirtualKeyCode::Escape)) => return,
+        Event::KeyboardInput(ElementState::Pressed, _, Some(glutin::VirtualKeyCode::Space)) => {
+          mesh_buffer = gen_new_tree(& window).1;
+        },
         Event::MouseInput(ElementState::Pressed, glutin::MouseButton::Left) => {
           if pan_button_pressed {
             camera.pan_start(mouse_pos);
