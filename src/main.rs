@@ -77,7 +77,7 @@ fn main() {
   camera.set_distance(30.0)
     .set_spin_speed(5.0);
   let model_position = Mat4::from_translation(Vec3::new(0.0, 0.0, 0.0));
-  let perspective_projection: Mat4 = cgmath::perspective(cgmath::Deg::new(36.0), ASPECT_RATIO, NEAR_PLANE_Z, FAR_PLANE_Z);
+  let perspective_projection: Mat4 = cgmath::perspective(cgmath::Deg(36.0), ASPECT_RATIO, NEAR_PLANE_Z, FAR_PLANE_Z);
 
   let draw_params = glium::draw_parameters::DrawParameters {
     backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
@@ -143,7 +143,7 @@ fn main() {
           pan_button_pressed = false;
           camera.pan_end();
         },
-        Event::MouseMoved((mousex, mousey)) => {
+        Event::MouseMoved(mousex, mousey) => {
           let norm_x = 2.0 * ((mousex as f32) / dpifactor / (WINDOW_WIDTH as f32)) - 1.0;
           // Note that the sign is reversed
           let norm_y = -(2.0 * ((mousey as f32) / dpifactor / (WINDOW_HEIGHT as f32)) - 1.0);
@@ -151,10 +151,10 @@ fn main() {
 
           camera.update(mouse_pos);
         },
-        Event::MouseWheel(glutin::MouseScrollDelta::PixelDelta(_, dy)) => {
+        Event::MouseWheel(glutin::MouseScrollDelta::PixelDelta(_, dy), _) => {
           camera.zoom(dy);
         },
-        Event::MouseWheel(glutin::MouseScrollDelta::LineDelta(_, dy)) => {
+        Event::MouseWheel(glutin::MouseScrollDelta::LineDelta(_, dy), _) => {
           camera.zoom(dy * 10.0);
         },
         _ => (),

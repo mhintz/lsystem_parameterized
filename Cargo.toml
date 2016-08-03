@@ -4,15 +4,14 @@ name = "lsystem"
 version = "0.1.0"
 
 [dependencies]
-arcball-cgmath = { path = "../arcball-cgmath", branch = "master" }
-cgmath = { path = "../cgmath-rs", branch = "master" }
-glium = "^0.13.5"
-matrixstack = { path = "../matrixstack", branch = "master" }
 num = "*"
-rand = "0.3"
-num-traits = "0.1"
+rand = "*"
+num-traits = "*"
+glium = "^0.15.0"
+cgmath = "^0.10.0"
+arcball-cgmath = "^0.4.0"
+matrixstack = "^0.1.4"
+half_edge_mesh = "^1.0.7"
+convex_hull = "^0.1.2"
 vertex_index_mesh = { path = "vertex_index_mesh" }
 line_mesh = { path = "line_mesh" }
-convex_hull = { path = "../convex_hull", branch = "master" }
-# half_edge_mesh = { path = "../half_edge_mesh", branch = "master" }
-half_edge_mesh = "^1.0.6"

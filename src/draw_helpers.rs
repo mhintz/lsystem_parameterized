@@ -33,16 +33,16 @@ pub fn ls_to_lines(word: &[Module]) -> LineMesh {
         line.move_to(mat_stack.origin());
       },
       DrawCommand::Roll { r } => {
-        mat_stack.rotate(Matrix3::from_angle_z(Rad::new(r)));
+        mat_stack.rotate(Matrix3::from_angle_z(Rad(r)));
       },
       DrawCommand::Pitch { r } => {
-        mat_stack.rotate(Matrix3::from_angle_x(Rad::new(r)));
+        mat_stack.rotate(Matrix3::from_angle_x(Rad(r)));
       },
       DrawCommand::Yaw { r } => {
-        mat_stack.rotate(Matrix3::from_angle_y(Rad::new(r)));
+        mat_stack.rotate(Matrix3::from_angle_y(Rad(r)));
       },
       DrawCommand::Euler { x, y, z } => {
-        mat_stack.rotate(Matrix3::from(Euler::new(Rad::new(x), Rad::new(y), Rad::new(z))));
+        mat_stack.rotate(Matrix3::from(Euler::new(Rad(x), Rad(y), Rad(z))));
       },
       DrawCommand::Push => {
         mat_stack.push();
@@ -170,16 +170,16 @@ pub fn ls_to_cylinders(word: & [Module]) -> VertexIndexMesh {
         mat_stack.transform(Matrix4::from_translation(base_heading * distance));
       },
       DrawCommand::Pitch { r } => {
-        mat_stack.rotate(Matrix3::from_angle_x(Rad::new(r)));
+        mat_stack.rotate(Matrix3::from_angle_x(Rad(r)));
       },
       DrawCommand::Yaw { r } => {
-        mat_stack.rotate(Matrix3::from_angle_y(Rad::new(r)));
+        mat_stack.rotate(Matrix3::from_angle_y(Rad(r)));
       },
       DrawCommand::Roll { r } => {
-        mat_stack.rotate(Matrix3::from_angle_z(Rad::new(r)));
+        mat_stack.rotate(Matrix3::from_angle_z(Rad(r)));
       },
       DrawCommand::Euler { x, y, z } => {
-        mat_stack.rotate(Matrix3::from(Euler::new(Rad::new(x), Rad::new(y), Rad::new(z))));
+        mat_stack.rotate(Matrix3::from(Euler::new(Rad(x), Rad(y), Rad(z))));
       },
       DrawCommand::Push => {
         mat_stack.push();
